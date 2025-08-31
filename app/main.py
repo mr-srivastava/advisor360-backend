@@ -6,7 +6,7 @@ app = FastAPI(title="Advisor360 API")
 
 # Allow origins (React dev server, etc.)
 origins = [
-    "https://advisor360.vercel.app"
+    "https://advisor360.vercel.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
