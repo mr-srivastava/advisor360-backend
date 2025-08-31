@@ -1,5 +1,6 @@
 from datetime import datetime
-from app.services.commissions import get_commissions,get_total_commissions, get_total_commissions_by_month, get_total_commissions_by_fy, get_monthly_commissions, get_commissions_with_partner
+from app.db.supabase import get_supabase
+from app.services.commissions import get_total_commissions, get_total_commissions_by_month, get_total_commissions_by_fy, get_monthly_commissions, get_commissions_with_partner, get_commissions
 from app.utils.date_utils import parse_financial_year
 
 def get_overview():
@@ -69,3 +70,47 @@ def get_recent_activities():
     recent_commissions = get_commissions_with_partner()[:10]  # Get the 10 most recent commissions
     return {"recent_commissions": recent_commissions,
             "monthly_commissions": monthly_commissions}
+
+def get_available_financial_years():
+    supabase = get_supabase()
+    response = supabase.rpc("get_financial_years").execute()
+    return [row["financial_year"] for row in response.data]
+
+def calculate_fy_metrics(selected_fy: str):
+    commissions = get_commissions()
+
+    # Filter commissions for selected FY
+    fy_commissions = [c for c in commissions if c.financialYear == selected_fy]
+    current_total = sum(c.amount for c in fy_commissions if c.amount is not None)
+
+    # Parse FY string e.g. "FY25-26"
+    start = selected_fy.replace("FY", "").split("-")[0]
+    prev_fy = f"FY{int(start) - 1}-{start}"
+
+    # Filter for prev year
+    prev_commissions = [c for c in commissions if c.financialYear == prev_fy]
+    prev_total = sum(c.amount for c in prev_commissions if c.amount is not None)
+
+    # YoY growth
+    yoy_growth = ((current_total - prev_total) / prev_total * 100) if prev_total > 0 else 0
+
+    return {
+        "selectedFY": selected_fy,
+        "currentYearTotal": current_total,
+        "yoyGrowth": yoy_growth,
+        "commissionCount": len(fy_commissions)
+    }
+    
+def get_monthly_commissions_by_fy(financial_year: str):
+    supabase = get_supabase()
+    response = supabase.rpc(
+        "get_monthly_growth_data", {"fy": financial_year}
+    ).execute()
+    return response.data or []
+
+def get_entity_performance_by_fy(financial_year: str):
+    supabase = get_supabase()
+    response = supabase.rpc(
+        "get_entity_breakdown", {"fy": financial_year}
+    ).execute()
+    return response.data or []

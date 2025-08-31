@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import commissions, partners, routes_goals, routes_users, dashboard
+from app.api import commissions, partners, dashboard
 
 app = FastAPI(title="Advisor360 API")
 
@@ -23,5 +23,3 @@ app.add_middleware(
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(partners.router, prefix="/partners", tags=["partners"])
 app.include_router(commissions.router, prefix="/commissions", tags=["commissions"])
-app.include_router(routes_goals.router, prefix="/goals", tags=["goals"])
-app.include_router(routes_users.router, prefix="/users", tags=["users"])
