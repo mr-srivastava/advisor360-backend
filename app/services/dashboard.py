@@ -2,6 +2,8 @@ from datetime import datetime
 from app.db.supabase import get_supabase
 from app.services.commissions import get_total_commissions, get_total_commissions_by_month, get_total_commissions_by_fy, get_monthly_commissions, get_commissions_with_partner, get_commissions
 from app.utils.date_utils import parse_financial_year
+from app.core.exceptions import FinancialYearNotFound, DatabaseError
+import re
 
 def get_overview():
     now = datetime.now()
@@ -72,45 +74,98 @@ def get_recent_activities():
             "monthly_commissions": monthly_commissions}
 
 def get_available_financial_years():
-    supabase = get_supabase()
-    response = supabase.rpc("get_financial_years").execute()
-    return [row["financial_year"] for row in response.data]
+    """Get all available financial years from the database"""
+    try:
+        supabase = get_supabase()
+        response = supabase.rpc("get_financial_years").execute()
+        if not response.data:
+            return []
+        return [row["financial_year"] for row in response.data]
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch financial years: {str(e)}")
 
 def calculate_fy_metrics(selected_fy: str):
-    commissions = get_commissions()
+    """Calculate key metrics for a specific financial year"""
+    # Validate financial year format
+    if not re.match(r'^FY\d{2}-\d{2}$', selected_fy):
+        raise FinancialYearNotFound(selected_fy)
+    
+    try:
+        commissions = get_commissions()
 
-    # Filter commissions for selected FY
-    fy_commissions = [c for c in commissions if c.financialYear == selected_fy]
-    current_total = sum(c.amount for c in fy_commissions if c.amount is not None)
+        # Filter commissions for selected FY
+        fy_commissions = [c for c in commissions if c.financialYear == selected_fy]
+        current_total = sum(c.amount for c in fy_commissions if c.amount is not None)
 
-    # Parse FY string e.g. "FY25-26"
-    start = selected_fy.replace("FY", "").split("-")[0]
-    prev_fy = f"FY{int(start) - 1}-{start}"
+        # Parse FY string e.g. "FY25-26"
+        start = selected_fy.replace("FY", "").split("-")[0]
+        prev_fy = f"FY{int(start) - 1}-{start}"
 
-    # Filter for prev year
-    prev_commissions = [c for c in commissions if c.financialYear == prev_fy]
-    prev_total = sum(c.amount for c in prev_commissions if c.amount is not None)
+        # Filter for prev year
+        prev_commissions = [c for c in commissions if c.financialYear == prev_fy]
+        prev_total = sum(c.amount for c in prev_commissions if c.amount is not None)
 
-    # YoY growth
-    yoy_growth = ((current_total - prev_total) / prev_total * 100) if prev_total > 0 else 0
+        # YoY growth
+        yoy_growth = ((current_total - prev_total) / prev_total * 100) if prev_total > 0 else 0
 
-    return {
-        "selectedFY": selected_fy,
-        "currentYearTotal": current_total,
-        "yoyGrowth": yoy_growth,
-        "commissionCount": len(fy_commissions)
-    }
+        return {
+            "selectedFY": selected_fy,
+            "currentYearTotal": current_total,
+            "yoyGrowth": yoy_growth,
+            "commissionCount": len(fy_commissions)
+        }
+    except Exception as e:
+        raise DatabaseError(f"Failed to calculate FY metrics: {str(e)}")
     
 def get_monthly_commissions_by_fy(financial_year: str):
-    supabase = get_supabase()
-    response = supabase.rpc(
-        "get_monthly_growth_data", {"fy": financial_year}
-    ).execute()
-    return response.data or []
+    """Get monthly commission data for a specific financial year"""
+    # Validate financial year format
+    if not re.match(r'^FY\d{2}-\d{2}$', financial_year):
+        raise FinancialYearNotFound(financial_year)
+    
+    try:
+        supabase = get_supabase()
+        response = supabase.rpc(
+            "get_monthly_growth_data", {"fy": financial_year}
+        ).execute()
+        return response.data or []
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch monthly commissions: {str(e)}")
 
 def get_entity_performance_by_fy(financial_year: str):
-    supabase = get_supabase()
-    response = supabase.rpc(
-        "get_entity_breakdown", {"fy": financial_year}
-    ).execute()
-    return response.data or []
+    """Get entity performance breakdown for a specific financial year"""
+    # Validate financial year format
+    if not re.match(r'^FY\d{2}-\d{2}$', financial_year):
+        raise FinancialYearNotFound(financial_year)
+    
+    try:
+        supabase = get_supabase()
+        response = supabase.rpc(
+            "get_entity_breakdown", {"fy": financial_year}
+        ).execute()
+        
+        raw_data = response.data or []
+        
+        # Transform data to match EntityPerformanceData schema
+        if raw_data and isinstance(raw_data[0], dict):
+            # Check if we have the expected fields from the RPC function
+            if all(key in raw_data[0] for key in ['entity_id', 'entity_name', 'total', 'percentage']):
+                return raw_data
+            # If we have name/value format, transform it
+            elif all(key in raw_data[0] for key in ['name', 'value']):
+                total_sum = sum(item.get('value', 0) for item in raw_data)
+                transformed_data = []
+                for i, item in enumerate(raw_data):
+                    value = item.get('value', 0)
+                    percentage = (value / total_sum * 100) if total_sum > 0 else 0
+                    transformed_data.append({
+                        'entity_id': str(i + 1),  # Generate a temporary ID
+                        'entity_name': item.get('name', ''),
+                        'total': float(value),
+                        'percentage': float(percentage)
+                    })
+                return transformed_data
+        
+        return raw_data
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch entity performance: {str(e)}")

@@ -1,40 +1,38 @@
-from typing import Optional, List, Literal
-from pydantic import BaseModel
+from typing import Optional, List
+from pydantic import BaseModel, Field
 from datetime import datetime
-
-EntityType = Literal[
-    "Mutual Funds",
-    "Life Insurance",
-    "Health Insurance",
-    "General Insurance",
-]
+from app.models.base import EntityType
 
 class Partner(BaseModel):
-    id: str
-    name: str
-    entityType: EntityType
-    createdAt: datetime
+    """Partner model for commission-related operations"""
+    id: str = Field(..., description="Partner ID")
+    name: str = Field(..., description="Partner name")
+    entityType: EntityType = Field(..., description="Entity type")
+    createdAt: datetime = Field(..., description="Creation timestamp")
 
 class Commission(BaseModel):
-    id: str
-    partnerId: str
-    amount: float
-    month: str  # Format: "August"
-    year: str   # Format: "2025"
-    financialYear: str  # Format: "FY25-26"
-    date: datetime
-    description: Optional[str] = None
-    createdAt: datetime
+    """Commission model for commission-related operations"""
+    id: str = Field(..., description="Commission ID")
+    partnerId: str = Field(..., description="Partner ID")
+    amount: float = Field(..., ge=0, description="Commission amount")
+    month: str = Field(..., description="Month name (e.g., 'August')")
+    year: str = Field(..., description="Year (e.g., '2025')")
+    financialYear: str = Field(..., description="Financial year (e.g., 'FY25-26')")
+    date: datetime = Field(..., description="Transaction date")
+    description: Optional[str] = Field(None, description="Commission description")
+    createdAt: datetime = Field(..., description="Creation timestamp")
 
 class MonthlyAnalytics(BaseModel):
-    month: str
-    year: str
-    total: float
-    growth: float  # Percentage
-    commissionCount: int
+    """Monthly analytics model"""
+    month: str = Field(..., description="Month name")
+    year: str = Field(..., description="Year")
+    total: float = Field(..., ge=0, description="Total amount")
+    growth: float = Field(..., description="Growth percentage")
+    commissionCount: int = Field(..., ge=0, description="Number of commissions")
 
 class YearlyAnalytics(BaseModel):
-    financialYear: str
-    total: float
-    growth: float  # Percentage
-    monthlyBreakdown: List[MonthlyAnalytics]
+    """Yearly analytics model"""
+    financialYear: str = Field(..., description="Financial year")
+    total: float = Field(..., ge=0, description="Total amount")
+    growth: float = Field(..., description="Growth percentage")
+    monthlyBreakdown: List[MonthlyAnalytics] = Field(..., description="Monthly breakdown")
