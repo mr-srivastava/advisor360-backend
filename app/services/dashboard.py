@@ -1,6 +1,6 @@
 from datetime import datetime
 from app.db.supabase import get_supabase
-from app.services.commissions import get_total_commissions, get_total_commissions_by_month, get_total_commissions_by_fy, get_monthly_commissions, get_commissions_with_partner, get_commissions
+from app.services.commissions import get_total_commissions, get_total_commissions_by_month, get_total_commissions_by_fy, get_monthly_commissions, get_commissions_with_partner, parse_commission_response
 from app.utils.date_utils import parse_financial_year
 from app.core.exceptions import FinancialYearNotFound, DatabaseError
 import re
@@ -91,19 +91,23 @@ def calculate_fy_metrics(selected_fy: str):
         raise FinancialYearNotFound(selected_fy)
     
     try:
-        commissions = get_commissions()
+        supabase = get_supabase()
+        result = supabase.table("commissions").select("*").eq("financial_year", selected_fy).execute()
+        rows = result.data or []
+        fy_commissions = [parse_commission_response(row) for row in rows]
 
         # Filter commissions for selected FY
-        fy_commissions = [c for c in commissions if c.financialYear == selected_fy]
-        current_total = sum(c.amount for c in fy_commissions if c.amount is not None)
+        current_total = sum(c.amount for c in fy_commissions)
 
         # Parse FY string e.g. "FY25-26"
         start = selected_fy.replace("FY", "").split("-")[0]
         prev_fy = f"FY{int(start) - 1}-{start}"
+        prev_result = supabase.table("commissions").select("*").eq("financial_year", prev_fy).execute()
+        prev_rows = prev_result.data or []
+        prev_commissions = [parse_commission_response(row) for row in prev_rows]
 
         # Filter for prev year
-        prev_commissions = [c for c in commissions if c.financialYear == prev_fy]
-        prev_total = sum(c.amount for c in prev_commissions if c.amount is not None)
+        prev_total = sum(c.amount for c in prev_commissions)
 
         # YoY growth
         yoy_growth = ((current_total - prev_total) / prev_total * 100) if prev_total > 0 else 0
