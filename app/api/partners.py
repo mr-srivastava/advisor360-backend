@@ -15,22 +15,9 @@ def read_partners(query: PartnerQuery = Depends()):
     try:
         partners_data = get_partners()
         
-        # Apply filtering if needed
-        if query.entity_type:
-            partners_data = [p for p in partners_data if p.get("entity_type") == query.entity_type]
-        
-        if query.search:
-            partners_data = [p for p in partners_data if query.search.lower() in p.get("name", "").lower()]
-        
-        # Apply pagination
-        total = len(partners_data)
-        start = query.offset
-        end = start + query.limit
-        paginated_partners = partners_data[start:end]
-        
         return PartnersListResponse(
-            data=PartnersListData(partners=paginated_partners),
-            message=f"Retrieved {len(paginated_partners)} partners successfully"
+            data=PartnersListData(partners=partners_data),
+            message=f"Retrieved {len(partners_data)} partners successfully"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch partners: {str(e)}")
