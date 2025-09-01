@@ -55,13 +55,13 @@ def parse_commission_response(row: dict) -> CommissionResponse:
         return CommissionResponse(
         id=row.get("id"),
         partnerId=row.get("partner_id"),
-        month=row.get("month_name"),
+        month=row.get("month_name").strip(),
         financialYear=row.get("financial_year"),
         createdAt=row.get("created_at"),
         updatedAt=row.get("updated_at"),
         partner=row.get("partner"),
         amount=row.get("amount"),
-        year=row.get("year"),
+        year=row.get("year").strip(),
         date=row.get("date"),
         description=row.get("description"))
     except Exception as e:
@@ -82,6 +82,26 @@ def get_commissions() -> List[CommissionResponse]:
         return formatted
     except Exception as e:
         raise DatabaseError(f"Failed to fetch commissions: {str(e)}")
+
+def get_commissions_by_fy(financial_year: str) -> List[CommissionResponse]:
+    """Get all commissions for a specific financial year"""
+    try:
+        supabase = get_supabase()
+        result = supabase.table("commissions").select("*").eq("financial_year", financial_year).execute()
+        rows = result.data or []
+        return [parse_commission_response(row) for row in rows]
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch commissions by FY: {str(e)}")
+
+def get_commissions_by_id(commission_id: str) -> CommissionResponse:
+    """Get a specific commission by ID"""
+    try:
+        supabase = get_supabase()
+        result = supabase.table("commissions").select("*").eq("id", commission_id).execute()
+        row = result.data or []
+        return parse_commission_response(row)
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch commission by ID: {str(e)}")
 
 def get_commissions_with_partner() -> List[dict]:
     """Get commissions with partner information"""

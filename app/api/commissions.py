@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.services.commissions import get_commissions
+from app.services.commissions import get_commissions, get_commissions_by_fy, get_commissions_by_id
 from app.models.api.requests import CommissionQuery
 from app.models.api.responses import CommissionsListResponse, CommissionsListData
 from app.core.exceptions import CommissionNotFound
@@ -15,28 +15,24 @@ def list_commissions(query: CommissionQuery = Depends()):
     try:
         commissions_data = get_commissions()
         
-        # Apply filtering if needed
-        if query.partner_id:
-            commissions_data = [c for c in commissions_data if c.partnerId == query.partner_id]
-        
-        if query.financial_year:
-            commissions_data = [c for c in commissions_data if c.financialYear == query.financial_year]
-        
-        if query.start_date:
-            commissions_data = [c for c in commissions_data if c.date >= query.start_date]
-        
-        if query.end_date:
-            commissions_data = [c for c in commissions_data if c.date <= query.end_date]
-        
-        # Apply pagination
-        total = len(commissions_data)
-        start = query.offset
-        end = start + query.limit
-        paginated_commissions = commissions_data[start:end]
-        
         return CommissionsListResponse(
-            data=CommissionsListData(commissions=paginated_commissions),
-            message=f"Retrieved {len(paginated_commissions)} commissions successfully"
+            data=CommissionsListData(commissions=commissions_data),
+            message=f"Retrieved {len(commissions_data)} commissions successfully"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch commissions: {str(e)}")
+
+@router.get("/{financial_year}",
+           response_model=CommissionsListResponse,
+           summary="Get all commissions for a specific financial year",
+           description="Returns a list of all commission transactions for a specific financial year")
+def list_commissions_by_fy(financial_year: str):
+    """Get all commissions for a specific financial year"""
+    try:
+        commissions_data = get_commissions_by_fy(financial_year)
+        return CommissionsListResponse(
+            data=CommissionsListData(commissions=commissions_data),
+            message=f"Retrieved {len(commissions_data)} commissions successfully"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch commissions: {str(e)}")
@@ -47,11 +43,7 @@ def list_commissions(query: CommissionQuery = Depends()):
 def get_commission(commission_id: str):
     """Get a specific commission by ID"""
     try:
-        commissions_data = get_commissions()
-        commission = next((c for c in commissions_data if c.id == commission_id), None)
-        
-        if not commission:
-            raise CommissionNotFound(commission_id)
+        commission = get_commissions_by_id(commission_id)
         
         return {
             "success": True,
