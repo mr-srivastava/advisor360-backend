@@ -1,7 +1,7 @@
 """Commission service implementation providing business logic for commission operations."""
 
 from datetime import date, datetime
-from typing import Optional
+from typing import Any, Optional
 
 from ..core.exceptions import (
     CommissionNotFound,
@@ -36,7 +36,8 @@ class CommissionService(ICommissionService):
     async def get_all_commissions(self) -> list[Commission]:
         """Retrieve all commissions in the system."""
         try:
-            return await self._commission_repo.get_all()
+            result: list[Commission] = await self._commission_repo.get_all()
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to retrieve commissions: {str(e)}"
@@ -64,7 +65,10 @@ class CommissionService(ICommissionService):
             if not partner:
                 raise PartnerNotFound(partner_id)
 
-            return await self._commission_repo.get_by_partner_id(partner_id)
+            result: list[Commission] = await self._commission_repo.get_by_partner_id(
+                partner_id
+            )
+            return result
         except PartnerNotFound:
             raise
         except Exception as e:
@@ -78,13 +82,16 @@ class CommissionService(ICommissionService):
         """Retrieve all commissions for a specific financial year."""
         try:
             fy = FinancialYear.from_string(financial_year)
-            return await self._commission_repo.get_by_financial_year(fy)
+            result: list[
+                Commission
+            ] = await self._commission_repo.get_by_financial_year(fy)
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to retrieve commissions for financial year: {str(e)}"
             ) from e
 
-    async def get_commissions_with_partners(self) -> list[dict]:
+    async def get_commissions_with_partners(self) -> list[dict[str, Any]]:
         """Retrieve all commissions with their associated partner information."""
         try:
             commissions = await self._commission_repo.get_all()
@@ -170,7 +177,8 @@ class CommissionService(ICommissionService):
             if not commission:
                 raise CommissionNotFound(commission_id)
 
-            return await self._commission_repo.delete(commission_id)
+            result: bool = await self._commission_repo.delete(commission_id)
+            return result
         except CommissionNotFound:
             raise
         except Exception as e:
@@ -179,8 +187,9 @@ class CommissionService(ICommissionService):
     async def get_total_commissions(self) -> float:
         """Get total commission amount across all time."""
         try:
-            commissions = await self._commission_repo.get_all()
-            return sum(c.amount.to_float() for c in commissions)
+            commissions: list[Commission] = await self._commission_repo.get_all()
+            total: float = sum(c.amount.to_float() for c in commissions)
+            return total
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to calculate total commissions: {str(e)}"
@@ -190,8 +199,11 @@ class CommissionService(ICommissionService):
         """Get total commission amount for a specific month and year."""
         try:
             month_num = datetime.strptime(month, "%B").month
-            commissions = await self._commission_repo.get_by_month_year(month_num, year)
-            return sum(c.amount.to_float() for c in commissions)
+            commissions: list[
+                Commission
+            ] = await self._commission_repo.get_by_month_year(month_num, year)
+            total: float = sum(c.amount.to_float() for c in commissions)
+            return total
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to calculate monthly commissions: {str(e)}"
@@ -203,13 +215,16 @@ class CommissionService(ICommissionService):
         """Get total commission amount for a specific financial year."""
         try:
             fy = FinancialYear.from_string(financial_year)
-            return await self._commission_repo.get_total_amount_by_financial_year(fy)
+            result: float = (
+                await self._commission_repo.get_total_amount_by_financial_year(fy)
+            )
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to calculate FY commissions: {str(e)}"
             ) from e
 
-    async def get_monthly_analytics(self) -> list[dict]:
+    async def get_monthly_analytics(self) -> list[dict[str, Any]]:
         """Get monthly commission analytics for the last 6 months."""
         try:
             commissions = await self._commission_repo.get_all()
@@ -241,7 +256,10 @@ class CommissionService(ICommissionService):
     async def get_recent_commissions(self, limit: int = 10) -> list[Commission]:
         """Get the most recent commissions."""
         try:
-            return await self._commission_repo.get_recent_commissions(limit)
+            result: list[
+                Commission
+            ] = await self._commission_repo.get_recent_commissions(limit)
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to retrieve recent commissions: {str(e)}"
@@ -250,6 +268,9 @@ class CommissionService(ICommissionService):
     async def search_commissions(self, search_term: str) -> list[Commission]:
         """Search commissions by description."""
         try:
-            return await self._commission_repo.search_by_description(search_term)
+            result: list[
+                Commission
+            ] = await self._commission_repo.search_by_description(search_term)
+            return result
         except Exception as e:
             raise ExternalServiceError(f"Failed to search commissions: {str(e)}") from e

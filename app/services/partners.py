@@ -3,9 +3,9 @@
 from typing import Optional
 
 from ..core.exceptions import (
-    DuplicatePartnerError,
+    DuplicateError,
     ExternalServiceError,
-    PartnerHasCommissionsError,
+    PartnerHasCommissions,
     PartnerNotFound,
     ValidationError,
 )
@@ -33,7 +33,8 @@ class PartnerService(IPartnerService):
     async def get_all_partners(self) -> list[Partner]:
         """Retrieve all partners in the system."""
         try:
-            return await self._partner_repo.get_all()
+            result: list[Partner] = await self._partner_repo.get_all()
+            return result
         except Exception as e:
             raise ExternalServiceError(f"Failed to retrieve partners: {str(e)}") from e
 
@@ -63,7 +64,10 @@ class PartnerService(IPartnerService):
     ) -> list[Partner]:
         """Retrieve all partners of a specific entity type."""
         try:
-            return await self._partner_repo.get_by_entity_type(entity_type)
+            result: list[Partner] = await self._partner_repo.get_by_entity_type(
+                entity_type
+            )
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to retrieve partners by entity type: {str(e)}"
@@ -75,9 +79,7 @@ class PartnerService(IPartnerService):
             # Validate name uniqueness
             existing_partner = await self._partner_repo.get_by_name(name.strip())
             if existing_partner:
-                raise DuplicatePartnerError(
-                    f"Partner with name '{name}' already exists"
-                )
+                raise DuplicateError(f"Partner with name '{name}' already exists")
 
             # Create domain object
             import uuid
@@ -87,7 +89,7 @@ class PartnerService(IPartnerService):
 
             # Save to repository
             return await self._partner_repo.create(partner)
-        except (ValidationError, DuplicatePartnerError):
+        except (ValidationError, DuplicateError):
             raise
         except Exception as e:
             raise ExternalServiceError(f"Failed to create partner: {str(e)}") from e
@@ -109,9 +111,7 @@ class PartnerService(IPartnerService):
             if name and name.strip() != partner.name:
                 existing_partner = await self._partner_repo.get_by_name(name.strip())
                 if existing_partner and existing_partner.id != partner_id:
-                    raise DuplicatePartnerError(
-                        f"Partner with name '{name}' already exists"
-                    )
+                    raise DuplicateError(f"Partner with name '{name}' already exists")
 
             # Apply updates
             updated_partner = partner
@@ -123,7 +123,7 @@ class PartnerService(IPartnerService):
 
             # Save changes
             return await self._partner_repo.update(partner_id, updated_partner)
-        except (PartnerNotFound, ValidationError, DuplicatePartnerError):
+        except (PartnerNotFound, ValidationError, DuplicateError):
             raise
         except Exception as e:
             raise ExternalServiceError(f"Failed to update partner: {str(e)}") from e
@@ -139,12 +139,13 @@ class PartnerService(IPartnerService):
             # Check if partner has commissions
             commissions = await self._commission_repo.get_by_partner_id(partner_id)
             if commissions:
-                raise PartnerHasCommissionsError(
+                raise PartnerHasCommissions(
                     f"Cannot delete partner with {len(commissions)} associated commissions"
                 )
 
-            return await self._partner_repo.delete(partner_id)
-        except (PartnerNotFound, PartnerHasCommissionsError):
+            result: bool = await self._partner_repo.delete(partner_id)
+            return result
+        except (PartnerNotFound, PartnerHasCommissions):
             raise
         except Exception as e:
             raise ExternalServiceError(f"Failed to delete partner: {str(e)}") from e
@@ -152,14 +153,16 @@ class PartnerService(IPartnerService):
     async def search_partners(self, search_term: str) -> list[Partner]:
         """Search partners by name."""
         try:
-            return await self._partner_repo.search_by_name(search_term)
+            result: list[Partner] = await self._partner_repo.search_by_name(search_term)
+            return result
         except Exception as e:
             raise ExternalServiceError(f"Failed to search partners: {str(e)}") from e
 
     async def get_active_partners(self) -> list[Partner]:
         """Retrieve all active partners."""
         try:
-            return await self._partner_repo.get_active_partners()
+            result: list[Partner] = await self._partner_repo.get_active_partners()
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to retrieve active partners: {str(e)}"
@@ -168,7 +171,10 @@ class PartnerService(IPartnerService):
     async def get_partners_with_commissions(self) -> list[Partner]:
         """Retrieve partners who have at least one commission."""
         try:
-            return await self._partner_repo.get_partners_with_commissions()
+            result: list[
+                Partner
+            ] = await self._partner_repo.get_partners_with_commissions()
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to retrieve partners with commissions: {str(e)}"
@@ -177,7 +183,10 @@ class PartnerService(IPartnerService):
     async def get_partners_without_commissions(self) -> list[Partner]:
         """Retrieve partners who have no commissions."""
         try:
-            return await self._partner_repo.get_partners_without_commissions()
+            result: list[
+                Partner
+            ] = await self._partner_repo.get_partners_without_commissions()
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to retrieve partners without commissions: {str(e)}"
@@ -211,7 +220,8 @@ class PartnerService(IPartnerService):
     async def get_recently_created_partners(self, limit: int = 10) -> list[Partner]:
         """Get the most recently created partners."""
         try:
-            return await self._partner_repo.get_recently_created(limit)
+            result: list[Partner] = await self._partner_repo.get_recently_created(limit)
+            return result
         except Exception as e:
             raise ExternalServiceError(
                 f"Failed to retrieve recent partners: {str(e)}"

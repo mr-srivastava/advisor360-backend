@@ -4,10 +4,7 @@ import re
 from datetime import datetime
 from typing import Any
 
-from ..core.exceptions import (
-    ExternalServiceError,
-    FinancialYearNotFound,
-)
+from ..core.exceptions import ExternalServiceError, NotFoundError
 from ..repositories.interfaces.commission_repository import ICommissionRepository
 from ..utils.date_utils import parse_financial_year
 from .interfaces.commission_service import ICommissionService
@@ -199,7 +196,7 @@ class DashboardService(IDashboardService):
         try:
             # Validate financial year format
             if not re.match(r"^FY\d{2}-\d{2}$", financial_year):
-                raise FinancialYearNotFound(financial_year)
+                raise NotFoundError(f"Financial year {financial_year} not found")
 
             # Get current FY commissions
             current_commissions = (
@@ -237,7 +234,7 @@ class DashboardService(IDashboardService):
                 "yoyGrowth": yoy_growth,
                 "commissionCount": len(current_commissions),
             }
-        except FinancialYearNotFound:
+        except NotFoundError:
             raise
         except Exception as e:
             raise ExternalServiceError(
@@ -251,7 +248,7 @@ class DashboardService(IDashboardService):
         try:
             # Validate financial year format
             if not re.match(r"^FY\d{2}-\d{2}$", financial_year):
-                raise FinancialYearNotFound(financial_year)
+                raise NotFoundError(f"Financial year {financial_year} not found")
 
             commissions = (
                 await self._commission_service.get_commissions_by_financial_year(
@@ -282,7 +279,7 @@ class DashboardService(IDashboardService):
             )
 
             return result
-        except FinancialYearNotFound:
+        except NotFoundError:
             raise
         except Exception as e:
             raise ExternalServiceError(
@@ -296,7 +293,7 @@ class DashboardService(IDashboardService):
         try:
             # Validate financial year format
             if not re.match(r"^FY\d{2}-\d{2}$", financial_year):
-                raise FinancialYearNotFound(financial_year)
+                raise NotFoundError(f"Financial year {financial_year} not found")
 
             commissions = (
                 await self._commission_service.get_commissions_by_financial_year(
@@ -338,7 +335,7 @@ class DashboardService(IDashboardService):
                 )
 
             return result
-        except FinancialYearNotFound:
+        except NotFoundError:
             raise
         except Exception as e:
             raise ExternalServiceError(
@@ -437,7 +434,7 @@ class DashboardService(IDashboardService):
         try:
             # Validate financial year format
             if not re.match(r"^FY\d{2}-\d{2}$", financial_year):
-                raise FinancialYearNotFound(financial_year)
+                raise NotFoundError(f"Financial year {financial_year} not found")
 
             commissions = (
                 await self._commission_service.get_commissions_by_financial_year(
@@ -463,7 +460,7 @@ class DashboardService(IDashboardService):
                 )
 
             return result
-        except FinancialYearNotFound:
+        except NotFoundError:
             raise
         except Exception as e:
             raise ExternalServiceError(
