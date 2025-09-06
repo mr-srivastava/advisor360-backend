@@ -1,14 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
-from app.services.dashboard import (
-    get_overview, 
-    get_recent_activities, 
-    get_available_financial_years, 
-    calculate_fy_metrics, 
-    get_monthly_commissions_by_fy, 
-    get_entity_performance_by_fy
-)
-from app.models.api.requests import FinancialYearPath, DashboardQuery
-from app.models.api.responses import (
+from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+
+from .dependencies import DashboardServiceDep
+from .dtos.dashboard_dtos import (
     DashboardOverviewResponse,
     FYMetricsResponse,
     FYMetricsData,
@@ -17,9 +11,13 @@ from app.models.api.responses import (
     RecentActivityResponse,
     RecentActivityData,
     FinancialYearsResponse,
-    FinancialYearsData
+    FinancialYearsData,
+    DashboardOverviewData,
+    StatCard,
+    DashboardMapper,
+    FinancialYearPathParam
 )
-from app.core.exceptions import FinancialYearNotFound, InvalidFinancialYearFormat
+from ..core.exceptions import FinancialYearError, DomainException
 
 router = APIRouter()
 
@@ -27,14 +25,19 @@ router = APIRouter()
            response_model=FinancialYearsResponse,
            summary="Get available financial years",
            description="Returns a list of all available financial years in the system")
-def fetch_available_financial_years():
+async def get_available_financial_years(
+    dashboard_service: DashboardServiceDep
+):
     """Get all available financial years"""
     try:
-        financial_years = get_available_financial_years()
+        financial_years = await dashboard_service.get_available_financial_years()
+        
         return FinancialYearsResponse(
             data=FinancialYearsData(financial_years=financial_years),
             message="Financial years retrieved successfully"
         )
+    except DomainException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch financial years: {str(e)}")
 
@@ -42,21 +45,30 @@ def fetch_available_financial_years():
            response_model=FYMetricsResponse,
            summary="Get key metrics for financial year",
            description="Returns key metrics including total, growth, and commission count for a specific financial year")
-def fetch_fy_key_metrics(financial_year: FinancialYearPath = Depends()):
+async def get_fy_key_metrics(
+    financial_year: str,
+    dashboard_service: DashboardServiceDep
+):
     """Get key metrics for a specific financial year"""
     try:
-        metrics = calculate_fy_metrics(financial_year.financial_year)
+        # Validate financial year format
+        fy_param = FinancialYearPathParam(financial_year=financial_year)
+        
+        metrics = await dashboard_service.calculate_financial_year_metrics(fy_param.financial_year)
+        
         return FYMetricsResponse(
             data=FYMetricsData(
-                selectedFY=metrics["selectedFY"],
-                currentYearTotal=metrics["currentYearTotal"],
-                yoyGrowth=metrics["yoyGrowth"],
-                commissionCount=metrics["commissionCount"]
+                selected_fy=metrics["selectedFY"],
+                current_year_total=metrics["currentYearTotal"],
+                yoy_growth=metrics["yoyGrowth"],
+                commission_count=metrics["commissionCount"]
             ),
             message="Key metrics retrieved successfully"
         )
-    except FinancialYearNotFound:
-        raise
+    except FinancialYearError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except DomainException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch key metrics: {str(e)}")
 
@@ -64,20 +76,29 @@ def fetch_fy_key_metrics(financial_year: FinancialYearPath = Depends()):
            response_model=PerformanceMetricsResponse,
            summary="Get performance metrics for financial year",
            description="Returns monthly growth data and entity performance breakdown for a specific financial year")
-def fetch_fy_performance_metrics(financial_year: FinancialYearPath = Depends()):
+async def get_fy_performance_metrics(
+    financial_year: str,
+    dashboard_service: DashboardServiceDep
+):
     """Get performance metrics for a specific financial year"""
     try:
-        monthly_growth = get_monthly_commissions_by_fy(financial_year.financial_year)
-        entity_performance = get_entity_performance_by_fy(financial_year.financial_year)
+        # Validate financial year format
+        fy_param = FinancialYearPathParam(financial_year=financial_year)
+        
+        monthly_growth = await dashboard_service.get_monthly_commissions_by_financial_year(fy_param.financial_year)
+        entity_performance = await dashboard_service.get_entity_performance_by_financial_year(fy_param.financial_year)
+        
         return PerformanceMetricsResponse(
             data=PerformanceMetricsData(
-                monthlyGrowth=monthly_growth,
-                entityPerformance=entity_performance
+                monthly_growth=monthly_growth,
+                entity_performance=entity_performance
             ),
             message="Performance metrics retrieved successfully"
         )
-    except FinancialYearNotFound:
-        raise
+    except FinancialYearError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except DomainException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch performance metrics: {str(e)}")
 
@@ -85,14 +106,40 @@ def fetch_fy_performance_metrics(financial_year: FinancialYearPath = Depends()):
            response_model=DashboardOverviewResponse,
            summary="Get dashboard overview",
            description="Returns overview statistics including total commissions, monthly data, and growth rates")
-def fetch_overview():
+async def get_overview(
+    dashboard_service: DashboardServiceDep
+):
     """Get dashboard overview statistics"""
     try:
-        stats = get_overview()
+        stats = await dashboard_service.get_overview_statistics()
+        
+        # Convert to stat cards format
+        stat_cards = []
+        for stat in stats:
+            trend_data = None
+            if "trend" in stat and stat["trend"]:
+                trend_data = DashboardMapper.create_trend_data(
+                    float(stat["trend"]["value"].replace("%", "").replace("+", ""))
+                )
+            
+            stat_card = DashboardMapper.create_stat_card(
+                id=stat["id"],
+                title=stat["title"],
+                value=DashboardMapper.format_currency(stat["value"]) if isinstance(stat["value"], (int, float)) else str(stat["value"]),
+                subtitle=stat["subtitle"],
+                icon=stat["icon"],
+                trend=trend_data
+            )
+            stat_cards.append(stat_card)
+        
+        overview_data = DashboardOverviewData(stats=stat_cards)
+        
         return DashboardOverviewResponse(
-            data={"stats": stats},
+            data=overview_data,
             message="Dashboard overview retrieved successfully"
         )
+    except DomainException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch dashboard overview: {str(e)}")
 
@@ -100,10 +147,13 @@ def fetch_overview():
            response_model=RecentActivityResponse,
            summary="Get recent activities",
            description="Returns recent commission activities and monthly summaries")
-def fetch_recent_activities():
+async def get_recent_activities(
+    dashboard_service: DashboardServiceDep
+):
     """Get recent activities"""
     try:
-        activities = get_recent_activities()
+        activities = await dashboard_service.get_recent_activities()
+        
         return RecentActivityResponse(
             data=RecentActivityData(
                 recent_commissions=activities["recent_commissions"],
@@ -111,5 +161,51 @@ def fetch_recent_activities():
             ),
             message="Recent activities retrieved successfully"
         )
+    except DomainException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch recent activities: {str(e)}")
+
+@router.get("/analytics/{financial_year}",
+           summary="Get comprehensive analytics for financial year",
+           description="Returns comprehensive analytics including trends, comparisons, and breakdowns")
+async def get_analytics(
+    financial_year: str,
+    dashboard_service: DashboardServiceDep,
+    include_quarterly: bool = Query(True, description="Include quarterly breakdown"),
+    include_trends: bool = Query(True, description="Include trend analysis")
+):
+    """Get comprehensive analytics for a financial year"""
+    try:
+        # Validate financial year format
+        fy_param = FinancialYearPathParam(financial_year=financial_year)
+        
+        analytics = await dashboard_service.get_growth_analytics(fy_param.financial_year)
+        
+        result = {
+            "financial_year": analytics["financial_year"],
+            "total_commission": analytics["total_commission"],
+            "yoy_growth": analytics["yoy_growth"],
+            "commission_count": analytics["commission_count"],
+            "monthly_breakdown": analytics["monthly_breakdown"]
+        }
+        
+        if include_quarterly:
+            quarterly_data = await dashboard_service.get_quarterly_breakdown(fy_param.financial_year)
+            result["quarterly_breakdown"] = quarterly_data
+        
+        if include_trends:
+            trends = await dashboard_service.get_commission_trends(12)
+            result["trends"] = trends
+        
+        return {
+            "success": True,
+            "data": result,
+            "message": "Analytics retrieved successfully"
+        }
+    except FinancialYearError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except DomainException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch analytics: {str(e)}")
