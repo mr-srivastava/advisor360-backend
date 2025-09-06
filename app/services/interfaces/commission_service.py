@@ -28,7 +28,7 @@ class ICommissionService(ABC):
             List of all commissions
             
         Raises:
-            ServiceError: If there's an error retrieving commissions
+            ExternalServiceError: If there's an error retrieving commissions
         """
         pass
     
@@ -45,7 +45,7 @@ class ICommissionService(ABC):
             
         Raises:
             CommissionNotFound: If commission doesn't exist
-            ServiceError: If there's an error retrieving the commission
+            ExternalServiceError: If there's an error retrieving the commission
         """
         pass
     
@@ -62,7 +62,7 @@ class ICommissionService(ABC):
             
         Raises:
             PartnerNotFound: If partner doesn't exist
-            ServiceError: If there's an error retrieving commissions
+            ExternalServiceError: If there's an error retrieving commissions
         """
         pass
     
@@ -78,7 +78,7 @@ class ICommissionService(ABC):
             List of commissions in the financial year
             
         Raises:
-            ServiceError: If there's an error retrieving commissions
+            ExternalServiceError: If there's an error retrieving commissions
         """
         pass
     
@@ -91,7 +91,7 @@ class ICommissionService(ABC):
             List of commission dictionaries with partner details
             
         Raises:
-            ServiceError: If there's an error retrieving data
+            ExternalServiceError: If there's an error retrieving data
         """
         pass
     
@@ -113,7 +113,7 @@ class ICommissionService(ABC):
         Raises:
             PartnerNotFound: If partner doesn't exist
             ValidationError: If input data is invalid
-            ServiceError: If there's an error creating the commission
+            ExternalServiceError: If there's an error creating the commission
         """
         pass
     
@@ -134,7 +134,7 @@ class ICommissionService(ABC):
         Raises:
             CommissionNotFound: If commission doesn't exist
             ValidationError: If input data is invalid
-            ServiceError: If there's an error updating the commission
+            ExternalServiceError: If there's an error updating the commission
         """
         pass
     
@@ -151,7 +151,7 @@ class ICommissionService(ABC):
             
         Raises:
             CommissionNotFound: If commission doesn't exist
-            ServiceError: If there's an error deleting the commission
+            ExternalServiceError: If there's an error deleting the commission
         """
         pass
     
@@ -164,7 +164,7 @@ class ICommissionService(ABC):
             Total commission amount
             
         Raises:
-            ServiceError: If there's an error calculating totals
+            ExternalServiceError: If there's an error calculating totals
         """
         pass
     
@@ -181,7 +181,7 @@ class ICommissionService(ABC):
             Total commission amount for the month
             
         Raises:
-            ServiceError: If there's an error calculating totals
+            ExternalServiceError: If there's an error calculating totals
         """
         pass
     
@@ -197,7 +197,7 @@ class ICommissionService(ABC):
             Total commission amount for the financial year
             
         Raises:
-            ServiceError: If there's an error calculating totals
+            ExternalServiceError: If there's an error calculating totals
         """
         pass
     
@@ -210,7 +210,7 @@ class ICommissionService(ABC):
             List of monthly analytics data
             
         Raises:
-            ServiceError: If there's an error generating analytics
+            ExternalServiceError: If there's an error generating analytics
         """
         pass
     
@@ -226,7 +226,7 @@ class ICommissionService(ABC):
             List of recent commissions
             
         Raises:
-            ServiceError: If there's an error retrieving commissions
+            ExternalServiceError: If there's an error retrieving commissions
         """
         pass
     
@@ -242,6 +242,6 @@ class ICommissionService(ABC):
             List of matching commissions
             
         Raises:
-            ServiceError: If there's an error searching commissions
+            ExternalServiceError: If there's an error searching commissions
         """
         pass

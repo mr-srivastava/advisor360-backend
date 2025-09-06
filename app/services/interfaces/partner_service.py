@@ -25,7 +25,7 @@ class IPartnerService(ABC):
             List of all partners
             
         Raises:
-            ServiceError: If there's an error retrieving partners
+            ExternalServiceError: If there's an error retrieving partners
         """
         pass
     
@@ -42,7 +42,7 @@ class IPartnerService(ABC):
             
         Raises:
             PartnerNotFound: If partner doesn't exist
-            ServiceError: If there's an error retrieving the partner
+            ExternalServiceError: If there's an error retrieving the partner
         """
         pass
     
@@ -58,7 +58,7 @@ class IPartnerService(ABC):
             The partner if found, None otherwise
             
         Raises:
-            ServiceError: If there's an error retrieving the partner
+            ExternalServiceError: If there's an error retrieving the partner
         """
         pass
     
@@ -74,7 +74,7 @@ class IPartnerService(ABC):
             List of partners with the specified entity type
             
         Raises:
-            ServiceError: If there's an error retrieving partners
+            ExternalServiceError: If there's an error retrieving partners
         """
         pass
     
@@ -93,7 +93,7 @@ class IPartnerService(ABC):
         Raises:
             ValidationError: If input data is invalid
             DuplicatePartnerError: If partner name already exists
-            ServiceError: If there's an error creating the partner
+            ExternalServiceError: If there's an error creating the partner
         """
         pass
     
@@ -115,7 +115,7 @@ class IPartnerService(ABC):
             PartnerNotFound: If partner doesn't exist
             ValidationError: If input data is invalid
             DuplicatePartnerError: If new name already exists
-            ServiceError: If there's an error updating the partner
+            ExternalServiceError: If there's an error updating the partner
         """
         pass
     
@@ -133,7 +133,7 @@ class IPartnerService(ABC):
         Raises:
             PartnerNotFound: If partner doesn't exist
             PartnerHasCommissionsError: If partner has associated commissions
-            ServiceError: If there's an error deleting the partner
+            ExternalServiceError: If there's an error deleting the partner
         """
         pass
     
@@ -149,7 +149,7 @@ class IPartnerService(ABC):
             List of matching partners
             
         Raises:
-            ServiceError: If there's an error searching partners
+            ExternalServiceError: If there's an error searching partners
         """
         pass
     
@@ -162,7 +162,7 @@ class IPartnerService(ABC):
             List of active partners
             
         Raises:
-            ServiceError: If there's an error retrieving partners
+            ExternalServiceError: If there's an error retrieving partners
         """
         pass
     
@@ -175,7 +175,7 @@ class IPartnerService(ABC):
             List of partners with commissions
             
         Raises:
-            ServiceError: If there's an error retrieving partners
+            ExternalServiceError: If there's an error retrieving partners
         """
         pass
     
@@ -188,7 +188,7 @@ class IPartnerService(ABC):
             List of partners without commissions
             
         Raises:
-            ServiceError: If there's an error retrieving partners
+            ExternalServiceError: If there's an error retrieving partners
         """
         pass
     
@@ -201,7 +201,7 @@ class IPartnerService(ABC):
             Dictionary mapping entity type names to partner counts
             
         Raises:
-            ServiceError: If there's an error calculating statistics
+            ExternalServiceError: If there's an error calculating statistics
         """
         pass
     
@@ -218,7 +218,7 @@ class IPartnerService(ABC):
             True if name is available, False if already exists
             
         Raises:
-            ServiceError: If there's an error validating the name
+            ExternalServiceError: If there's an error validating the name
         """
         pass
     
@@ -234,6 +234,6 @@ class IPartnerService(ABC):
             List of recent partners
             
         Raises:
-            ServiceError: If there's an error retrieving partners
+            ExternalServiceError: If there's an error retrieving partners
         """
         pass

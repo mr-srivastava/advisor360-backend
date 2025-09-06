@@ -24,7 +24,7 @@ class IDashboardService(ABC):
             financial year commission, and growth rate
             
         Raises:
-            ServiceError: If there's an error calculating statistics
+            ExternalServiceError: If there's an error calculating statistics
         """
         pass
     
@@ -37,7 +37,7 @@ class IDashboardService(ABC):
             Dictionary containing recent commissions and monthly commission data
             
         Raises:
-            ServiceError: If there's an error retrieving activities
+            ExternalServiceError: If there's an error retrieving activities
         """
         pass
     
@@ -50,7 +50,7 @@ class IDashboardService(ABC):
             List of financial year strings (e.g., ["FY23-24", "FY24-25"])
             
         Raises:
-            ServiceError: If there's an error retrieving financial years
+            ExternalServiceError: If there's an error retrieving financial years
         """
         pass
     
@@ -67,7 +67,7 @@ class IDashboardService(ABC):
             
         Raises:
             FinancialYearNotFound: If financial year doesn't exist
-            ServiceError: If there's an error calculating metrics
+            ExternalServiceError: If there's an error calculating metrics
         """
         pass
     
@@ -84,7 +84,7 @@ class IDashboardService(ABC):
             
         Raises:
             FinancialYearNotFound: If financial year doesn't exist
-            ServiceError: If there's an error retrieving monthly data
+            ExternalServiceError: If there's an error retrieving monthly data
         """
         pass
     
@@ -101,7 +101,7 @@ class IDashboardService(ABC):
             
         Raises:
             FinancialYearNotFound: If financial year doesn't exist
-            ServiceError: If there's an error retrieving entity performance
+            ExternalServiceError: If there's an error retrieving entity performance
         """
         pass
     
@@ -118,7 +118,7 @@ class IDashboardService(ABC):
             
         Raises:
             FinancialYearNotFound: If financial year doesn't exist
-            ServiceError: If there's an error calculating growth analytics
+            ExternalServiceError: If there's an error calculating growth analytics
         """
         pass
     
@@ -134,7 +134,7 @@ class IDashboardService(ABC):
             List of monthly trend data
             
         Raises:
-            ServiceError: If there's an error calculating trends
+            ExternalServiceError: If there's an error calculating trends
         """
         pass
     
@@ -147,7 +147,7 @@ class IDashboardService(ABC):
             List of partner performance data including totals and rankings
             
         Raises:
-            ServiceError: If there's an error calculating partner performance
+            ExternalServiceError: If there's an error calculating partner performance
         """
         pass
     
@@ -164,6 +164,6 @@ class IDashboardService(ABC):
             
         Raises:
             FinancialYearNotFound: If financial year doesn't exist
-            ServiceError: If there's an error calculating quarterly breakdown
+            ExternalServiceError: If there's an error calculating quarterly breakdown
         """
         pass
