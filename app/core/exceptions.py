@@ -34,3 +34,27 @@ class DatabaseError(Advisor360Exception):
     """Raised when database operations fail"""
     def __init__(self, message: str):
         super().__init__(f"Database error: {message}")
+
+
+class ServiceError(Advisor360Exception):
+    """Raised when service operations fail"""
+    def __init__(self, message: str):
+        super().__init__(f"Service error: {message}")
+
+
+class ValidationError(Advisor360Exception):
+    """Raised when validation fails"""
+    def __init__(self, message: str):
+        super().__init__(f"Validation error: {message}")
+
+
+class DuplicatePartnerError(Advisor360Exception):
+    """Raised when trying to create a partner with duplicate name"""
+    def __init__(self, message: str):
+        super().__init__(f"Duplicate partner: {message}")
+
+
+class PartnerHasCommissionsError(Advisor360Exception):
+    """Raised when trying to delete a partner that has associated commissions"""
+    def __init__(self, message: str):
+        super().__init__(f"Partner has commissions: {message}")
