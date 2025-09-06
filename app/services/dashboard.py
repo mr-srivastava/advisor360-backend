@@ -1,11 +1,13 @@
-"""Dashboard service implementation providing analytics and reporting operations.
-"""
+"""Dashboard service implementation providing analytics and reporting operations."""
 
 import re
 from datetime import datetime
 from typing import Any
 
-from ..core.exceptions import DomainException, ExternalExternalServiceError, FinancialYearError, NotFoundError
+from ..core.exceptions import (
+    ExternalServiceError,
+    FinancialYearNotFound,
+)
 from ..repositories.interfaces.commission_repository import ICommissionRepository
 from ..utils.date_utils import parse_financial_year
 from .interfaces.commission_service import ICommissionService
@@ -109,7 +111,9 @@ class DashboardService(IDashboardService):
                 },
             ]
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get overview statistics: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get overview statistics: {str(e)}"
+            ) from e
 
     async def get_recent_activities(self) -> dict[str, Any]:
         """Get recent activities including recent commissions and monthly data."""
@@ -169,7 +173,9 @@ class DashboardService(IDashboardService):
                 "monthly_commissions": formatted_monthly_commissions,
             }
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get recent activities: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get recent activities: {str(e)}"
+            ) from e
 
     async def get_available_financial_years(self) -> list[str]:
         """Get all available financial years from the system."""
@@ -180,9 +186,11 @@ class DashboardService(IDashboardService):
             for commission in commissions:
                 financial_years.add(commission.financial_year.to_string("short"))
 
-            return sorted(list(financial_years), reverse=True)
+            return sorted(financial_years, reverse=True)
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get available financial years: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get available financial years: {str(e)}"
+            ) from e
 
     async def calculate_financial_year_metrics(
         self, financial_year: str
@@ -213,7 +221,7 @@ class DashboardService(IDashboardService):
                     )
                 )
                 prev_total = sum(c.amount.to_float() for c in prev_commissions)
-            except:
+            except Exception:
                 prev_total = 0
 
             # Calculate YoY growth
@@ -232,7 +240,9 @@ class DashboardService(IDashboardService):
         except FinancialYearNotFound:
             raise
         except Exception as e:
-            raise ExternalServiceError(f"Failed to calculate FY metrics: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to calculate FY metrics: {str(e)}"
+            ) from e
 
     async def get_monthly_commissions_by_financial_year(
         self, financial_year: str
@@ -275,7 +285,9 @@ class DashboardService(IDashboardService):
         except FinancialYearNotFound:
             raise
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get monthly commissions: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get monthly commissions: {str(e)}"
+            ) from e
 
     async def get_entity_performance_by_financial_year(
         self, financial_year: str
@@ -329,7 +341,9 @@ class DashboardService(IDashboardService):
         except FinancialYearNotFound:
             raise
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get entity performance: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get entity performance: {str(e)}"
+            ) from e
 
     async def get_growth_analytics(self, financial_year: str) -> dict[str, Any]:
         """Get growth analytics comparing current and previous financial years."""
@@ -347,7 +361,9 @@ class DashboardService(IDashboardService):
                 "monthly_breakdown": monthly_data,
             }
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get growth analytics: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get growth analytics: {str(e)}"
+            ) from e
 
     async def get_commission_trends(self, months: int = 12) -> list[dict[str, Any]]:
         """Get commission trends over the specified number of months."""
@@ -379,7 +395,9 @@ class DashboardService(IDashboardService):
 
             return result[:months]
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get commission trends: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get commission trends: {str(e)}"
+            ) from e
 
     async def get_partner_performance_summary(self) -> list[dict[str, Any]]:
         """Get performance summary for all partners."""
@@ -408,7 +426,9 @@ class DashboardService(IDashboardService):
 
             return result
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get partner performance summary: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get partner performance summary: {str(e)}"
+            ) from e
 
     async def get_quarterly_breakdown(
         self, financial_year: str
@@ -446,4 +466,6 @@ class DashboardService(IDashboardService):
         except FinancialYearNotFound:
             raise
         except Exception as e:
-            raise ExternalServiceError(f"Failed to get quarterly breakdown: {str(e)}")
+            raise ExternalServiceError(
+                f"Failed to get quarterly breakdown: {str(e)}"
+            ) from e
