@@ -7,7 +7,8 @@ def parse_financial_year(date_obj):
         return f"FY{str(year)[-2:]}-{str(year + 1)[-2:]}"
     else:  # Jan–Mar → previous year to current year
         return f"FY{str(year - 1)[-2:]}-{str(year)[-2:]}"
-    
+
+
 def format_month_year(month, year):
     # If month is already an integer
     if isinstance(month, int):

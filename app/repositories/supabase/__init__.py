@@ -1,6 +1,4 @@
-"""
-Supabase repository implementations.
-"""
+"""Supabase repository implementations."""
 
 from .base_repository import BaseSupabaseRepository
 from .commission_repository import CommissionRepository

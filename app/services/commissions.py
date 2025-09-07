@@ -95,9 +95,9 @@ class CommissionService(ICommissionService):
         """Retrieve all commissions for a specific financial year."""
         try:
             fy = FinancialYear.from_string(financial_year)
-            result: list[
-                Commission
-            ] = await self._commission_repo.get_by_financial_year(fy)
+            result: list[Commission] = (
+                await self._commission_repo.get_by_financial_year(fy)
+            )
             return result
         except Exception as e:
             raise ExternalServiceError(
@@ -214,9 +214,9 @@ class CommissionService(ICommissionService):
         """Get total commission amount for a specific month and year."""
         try:
             month_num = datetime.strptime(month, "%B").month
-            commissions: list[
-                Commission
-            ] = await self._commission_repo.get_by_month_year(month_num, year)
+            commissions: list[Commission] = (
+                await self._commission_repo.get_by_month_year(month_num, year)
+            )
             total: float = sum(c.amount.to_float() for c in commissions)
             return total
         except Exception as e:
@@ -271,9 +271,9 @@ class CommissionService(ICommissionService):
     async def get_recent_commissions(self, limit: int = 10) -> list[Commission]:
         """Get the most recent commissions."""
         try:
-            result: list[
-                Commission
-            ] = await self._commission_repo.get_recent_commissions(limit)
+            result: list[Commission] = (
+                await self._commission_repo.get_recent_commissions(limit)
+            )
             return result
         except Exception as e:
             raise ExternalServiceError(
@@ -283,9 +283,74 @@ class CommissionService(ICommissionService):
     async def search_commissions(self, search_term: str) -> list[Commission]:
         """Search commissions by description."""
         try:
-            result: list[
-                Commission
-            ] = await self._commission_repo.search_by_description(search_term)
+            result: list[Commission] = (
+                await self._commission_repo.search_by_description(search_term)
+            )
             return result
         except Exception as e:
             raise ExternalServiceError(f"Failed to search commissions: {str(e)}") from e
+
+    async def get_commission_matrix_by_fy(self, financial_year: str) -> dict:
+        try:
+            fy = FinancialYear.from_string(financial_year)
+            commissions_current = await self._commission_repo.get_by_financial_year(fy)
+            commissions_previous = await self._commission_repo.get_by_financial_year(
+                FinancialYear(fy.start_year - 1, fy.end_year - 1)
+            )
+
+            partners = await self._partner_repo.get_all()
+            financial_months = [
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+                "January",
+                "February",
+                "March",
+            ]
+
+            # Pre-group commissions by (partner_id, month)
+            from collections import defaultdict
+
+            current_map = defaultdict(float)
+            for c in commissions_current:
+                current_map[(c.partner_id, c.get_month_name())] += c.amount.to_float()
+
+            previous_map = defaultdict(float)
+            for c in commissions_previous:
+                previous_map[(c.partner_id, c.get_month_name())] += c.amount.to_float()
+
+            # Build matrix inline
+            matrix = []
+            total = 0.0
+            for partner in partners:
+                row = {
+                    "partner_id": partner.id,
+                    "partner_name": partner.name,
+                    "months": [],
+                }
+                for month in financial_months:
+                    current = current_map.get((partner.id, month), 0.0)
+                    previous = previous_map.get((partner.id, month), 0.0)
+                    row["months"].append(
+                        {"month": month, "current": current, "previous": previous}
+                    )
+                    total += current + previous
+                matrix.append(row)
+
+            result = {
+                "financial_year": financial_year,
+                "matrix": matrix,
+                "partners": [p.name for p in partners],
+                "months": financial_months,
+            }
+            return result
+        except Exception as e:
+            raise ExternalServiceError(
+                f"Failed to get commission matrix: {str(e)}"
+            ) from e

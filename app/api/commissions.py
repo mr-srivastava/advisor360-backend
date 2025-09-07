@@ -8,6 +8,7 @@ from .dtos.commission_dtos import (
     CommissionDetailResponse,
     CommissionListResponse,
     CommissionMapper,
+    CommissionMatrixResponse,
     CreateCommissionRequest,
     UpdateCommissionRequest,
 )
@@ -200,4 +201,25 @@ async def delete_commission(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to delete commission: {str(e)}"
+        )
+
+
+@router.get(
+    "/matrix/{financial_year}",
+    response_model=CommissionMatrixResponse,
+    summary="Get Matrix View for Commission by FY",
+)
+async def get_commission_matrix_by_fy(
+    financial_year: str,
+    commission_service: CommissionServiceDep,
+):
+    """Get Matrix View for Commission by FY"""
+    try:
+        get_commission_matrix_by_fy = (
+            await commission_service.get_commission_matrix_by_fy(financial_year)
+        )
+        return CommissionMapper.to_matrix_response(get_commission_matrix_by_fy)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get commission matrix: {str(e)}"
         )

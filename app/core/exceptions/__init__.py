@@ -2,47 +2,45 @@
 
 # Domain exceptions
 from .domain_exceptions import (
-    DomainException,
-    ValidationError,
-    NotFoundError,
-    BusinessRuleViolation,
-    DuplicateError,
     AuthorizationError,
-    ConfigurationError,
-    ExternalServiceError,
-    FinancialYearError,
-    PartnerError,
-    PartnerNotFound,
-    PartnerHasCommissions,
+    BusinessRuleViolation,
     CommissionError,
     CommissionNotFound,
+    ConfigurationError,
+    DomainException,
+    DuplicateError,
+    ExternalServiceError,
+    FinancialYearError,
     InvalidCommissionAmount,
+    NotFoundError,
+    PartnerError,
+    PartnerHasCommissions,
+    PartnerNotFound,
     TransactionError,
-    TransactionNotFound
+    TransactionNotFound,
+    ValidationError,
 )
 
 # Infrastructure exceptions
 from .infrastructure_exceptions import (
-    InfrastructureError,
-    DatabaseError,
-    ConnectionError,
-    TimeoutError,
-    SupabaseError,
     CacheError,
+    ConnectionError,
+    DatabaseError,
     FileSystemError,
-    SerializationError
+    InfrastructureError,
+    SerializationError,
+    SupabaseError,
+    TimeoutError,
 )
 
 # Legacy repository exceptions (for backward compatibility)
-from .repository_exceptions import (
-    RepositoryError,
-    NotFoundError as LegacyNotFoundError,
-    ValidationError as LegacyValidationError,
-    DuplicateError as LegacyDuplicateError,
-    ConnectionError as LegacyConnectionError,
-    TransactionError as LegacyTransactionError,
-    ConfigurationError as LegacyConfigurationError
-)
+from .repository_exceptions import ConfigurationError as LegacyConfigurationError
+from .repository_exceptions import ConnectionError as LegacyConnectionError
+from .repository_exceptions import DuplicateError as LegacyDuplicateError
+from .repository_exceptions import NotFoundError as LegacyNotFoundError
+from .repository_exceptions import RepositoryError
+from .repository_exceptions import TransactionError as LegacyTransactionError
+from .repository_exceptions import ValidationError as LegacyValidationError
 
 __all__ = [
     # Domain exceptions
@@ -63,7 +61,6 @@ __all__ = [
     "InvalidCommissionAmount",
     "TransactionError",
     "TransactionNotFound",
-    
     # Infrastructure exceptions
     "InfrastructureError",
     "DatabaseError",
@@ -73,7 +70,6 @@ __all__ = [
     "CacheError",
     "FileSystemError",
     "SerializationError",
-    
     # Legacy exceptions (for backward compatibility)
     "RepositoryError",
     "LegacyNotFoundError",
@@ -81,5 +77,5 @@ __all__ = [
     "LegacyDuplicateError",
     "LegacyConnectionError",
     "LegacyTransactionError",
-    "LegacyConfigurationError"
+    "LegacyConfigurationError",
 ]

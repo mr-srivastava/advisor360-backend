@@ -240,3 +240,10 @@ class ICommissionService(ABC):
             ExternalServiceError: If there's an error searching commissions
         """
         pass
+
+    @abstractmethod
+    async def get_commission_matrix_by_fy(
+        self, financial_year: str
+    ) -> list[dict[str, Any]]:
+        """Get Matrix View for Commission by FY"""
+        pass

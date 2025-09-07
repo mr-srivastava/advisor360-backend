@@ -1,5 +1,4 @@
-"""Base Supabase repository implementation providing common database operations.
-"""
+"""Base Supabase repository implementation providing common database operations."""
 
 import logging
 from typing import Any, Generic, Optional, TypeVar

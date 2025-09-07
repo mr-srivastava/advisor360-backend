@@ -1,5 +1,4 @@
-"""Supabase implementation of the Commission repository.
-"""
+"""Supabase implementation of the Commission repository."""
 
 import logging
 from datetime import date

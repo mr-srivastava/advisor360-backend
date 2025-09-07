@@ -171,9 +171,9 @@ class PartnerService(IPartnerService):
     async def get_partners_with_commissions(self) -> list[Partner]:
         """Retrieve partners who have at least one commission."""
         try:
-            result: list[
-                Partner
-            ] = await self._partner_repo.get_partners_with_commissions()
+            result: list[Partner] = (
+                await self._partner_repo.get_partners_with_commissions()
+            )
             return result
         except Exception as e:
             raise ExternalServiceError(
@@ -183,9 +183,9 @@ class PartnerService(IPartnerService):
     async def get_partners_without_commissions(self) -> list[Partner]:
         """Retrieve partners who have no commissions."""
         try:
-            result: list[
-                Partner
-            ] = await self._partner_repo.get_partners_without_commissions()
+            result: list[Partner] = (
+                await self._partner_repo.get_partners_without_commissions()
+            )
             return result
         except Exception as e:
             raise ExternalServiceError(

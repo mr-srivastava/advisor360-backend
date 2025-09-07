@@ -1,34 +1,38 @@
-"""
-Commission DTOs for API request and response models.
-"""
+"""Commission DTOs for API request and response models."""
+
+from datetime import date, datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List
-from datetime import datetime, date
-from decimal import Decimal
 
-from .common_dtos import BaseResponse, DataResponse, ListResponse, PaginatedResponse
 from app.domain.commission import Commission
 from app.domain.partner import Partner
 from app.domain.value_objects.money import Money
-from app.domain.value_objects.financial_year import FinancialYear
+
+from .common_dtos import BaseResponse, DataResponse, ListResponse, PaginatedResponse
+
 
 # Request DTOs
 class CreateCommissionRequest(BaseModel):
     """Request model for creating a new commission."""
+
     partner_id: str = Field(..., description="ID of the partner", min_length=1)
     amount: float = Field(..., description="Commission amount", gt=0)
-    currency: str = Field("INR", description="Currency code", min_length=3, max_length=3)
+    currency: str = Field(
+        "INR", description="Currency code", min_length=3, max_length=3
+    )
     transaction_date: date = Field(..., description="Date of the transaction")
-    description: Optional[str] = Field(None, description="Optional description", max_length=500)
+    description: Optional[str] = Field(
+        None, description="Optional description", max_length=500
+    )
 
-    @validator('transaction_date')
+    @validator("transaction_date")
     def validate_transaction_date(cls, v):
         if v > date.today():
-            raise ValueError('Transaction date cannot be in the future')
+            raise ValueError("Transaction date cannot be in the future")
         return v
 
-    @validator('currency')
+    @validator("currency")
     def validate_currency(cls, v):
         return v.upper()
 
@@ -39,30 +43,42 @@ class CreateCommissionRequest(BaseModel):
             partner_id=self.partner_id,
             amount=money,
             transaction_date=self.transaction_date,
-            description=self.description
+            description=self.description,
         )
+
 
 class UpdateCommissionRequest(BaseModel):
     """Request model for updating an existing commission."""
-    amount: Optional[float] = Field(None, description="Commission amount", gt=0)
-    currency: Optional[str] = Field(None, description="Currency code", min_length=3, max_length=3)
-    transaction_date: Optional[date] = Field(None, description="Date of the transaction")
-    description: Optional[str] = Field(None, description="Optional description", max_length=500)
 
-    @validator('transaction_date')
+    amount: Optional[float] = Field(None, description="Commission amount", gt=0)
+    currency: Optional[str] = Field(
+        None, description="Currency code", min_length=3, max_length=3
+    )
+    transaction_date: Optional[date] = Field(
+        None, description="Date of the transaction"
+    )
+    description: Optional[str] = Field(
+        None, description="Optional description", max_length=500
+    )
+
+    @validator("transaction_date")
     def validate_transaction_date(cls, v):
         if v and v > date.today():
-            raise ValueError('Transaction date cannot be in the future')
+            raise ValueError("Transaction date cannot be in the future")
         return v
 
-    @validator('currency')
+    @validator("currency")
     def validate_currency(cls, v):
         return v.upper() if v else v
 
+
 class CommissionQueryParams(BaseModel):
     """Query parameters for commission endpoints."""
+
     partner_id: Optional[str] = Field(None, description="Filter by partner ID")
-    financial_year: Optional[str] = Field(None, description="Filter by financial year (e.g., FY24-25)")
+    financial_year: Optional[str] = Field(
+        None, description="Filter by financial year (e.g., FY24-25)"
+    )
     start_date: Optional[date] = Field(None, description="Filter by start date")
     end_date: Optional[date] = Field(None, description="Filter by end date")
     min_amount: Optional[float] = Field(None, description="Minimum amount filter", ge=0)
@@ -70,23 +86,25 @@ class CommissionQueryParams(BaseModel):
     page: int = Field(1, description="Page number", ge=1)
     per_page: int = Field(10, description="Items per page", ge=1, le=100)
 
-    @validator('end_date')
+    @validator("end_date")
     def validate_date_range(cls, v, values):
-        if v and 'start_date' in values and values['start_date']:
-            if v < values['start_date']:
-                raise ValueError('End date must be after start date')
+        if v and "start_date" in values and values["start_date"]:
+            if v < values["start_date"]:
+                raise ValueError("End date must be after start date")
         return v
 
-    @validator('max_amount')
+    @validator("max_amount")
     def validate_amount_range(cls, v, values):
-        if v and 'min_amount' in values and values['min_amount']:
-            if v < values['min_amount']:
-                raise ValueError('Max amount must be greater than min amount')
+        if v and "min_amount" in values and values["min_amount"]:
+            if v < values["min_amount"]:
+                raise ValueError("Max amount must be greater than min amount")
         return v
+
 
 # Response DTOs
 class CommissionResponse(BaseModel):
     """Response model for commission data."""
+
     id: str = Field(..., description="Commission ID")
     partner_id: str = Field(..., description="Partner ID")
     partner_name: Optional[str] = Field(None, description="Partner name")
@@ -103,7 +121,9 @@ class CommissionResponse(BaseModel):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     @classmethod
-    def from_domain(cls, commission: Commission, partner: Optional[Partner] = None) -> "CommissionResponse":
+    def from_domain(
+        cls, commission: Commission, partner: Optional[Partner] = None
+    ) -> "CommissionResponse":
         """Create response DTO from domain model."""
         return cls(
             id=commission.id,
@@ -119,73 +139,144 @@ class CommissionResponse(BaseModel):
             quarter=commission.get_quarter(),
             description=commission.description,
             created_at=commission.created_at,
-            updated_at=commission.updated_at
+            updated_at=commission.updated_at,
         )
+
 
 class CommissionSummary(BaseModel):
     """Summary information for commission aggregations."""
+
     total_amount: float = Field(..., description="Total commission amount")
     currency: str = Field(..., description="Currency code")
     count: int = Field(..., description="Number of commissions")
     average_amount: float = Field(..., description="Average commission amount")
     financial_year: str = Field(..., description="Financial year")
 
+
 class CommissionDetailResponse(DataResponse[CommissionResponse]):
     """Response for single commission detail."""
+
     pass
+
 
 class CommissionListResponse(ListResponse[CommissionResponse]):
     """Response for commission list."""
+
     summary: Optional[CommissionSummary] = Field(None, description="Summary statistics")
+
 
 class CommissionPaginatedResponse(PaginatedResponse[CommissionResponse]):
     """Paginated response for commission list."""
+
     summary: Optional[CommissionSummary] = Field(None, description="Summary statistics")
+
 
 # Analytics DTOs
 class MonthlyCommissionData(BaseModel):
     """Monthly commission aggregation data."""
+
     month: str = Field(..., description="Month name")
     year: int = Field(..., description="Year")
     total_amount: float = Field(..., description="Total amount for the month")
     count: int = Field(..., description="Number of commissions")
-    growth_percentage: Optional[float] = Field(None, description="Growth compared to previous month")
+    growth_percentage: Optional[float] = Field(
+        None, description="Growth compared to previous month"
+    )
+
 
 class PartnerCommissionData(BaseModel):
     """Partner-wise commission aggregation data."""
+
     partner_id: str = Field(..., description="Partner ID")
     partner_name: str = Field(..., description="Partner name")
     entity_type: str = Field(..., description="Entity type")
     total_amount: float = Field(..., description="Total commission amount")
     count: int = Field(..., description="Number of commissions")
-    percentage_of_total: float = Field(..., description="Percentage of total commissions")
+    percentage_of_total: float = Field(
+        ..., description="Percentage of total commissions"
+    )
+
 
 class CommissionAnalyticsResponse(BaseResponse):
     """Response for commission analytics."""
-    monthly_data: List[MonthlyCommissionData] = Field(..., description="Monthly breakdown")
-    partner_data: List[PartnerCommissionData] = Field(..., description="Partner-wise breakdown")
+
+    monthly_data: list[MonthlyCommissionData] = Field(
+        ..., description="Monthly breakdown"
+    )
+    partner_data: list[PartnerCommissionData] = Field(
+        ..., description="Partner-wise breakdown"
+    )
     total_summary: CommissionSummary = Field(..., description="Overall summary")
+
+
+class MonthCommission(BaseModel):
+    """Commission values for a given month."""
+
+    month: str = Field(..., description="Month name")
+    current: float = Field(..., description="Current financial year commission")
+    previous: float = Field(..., description="Previous financial year commission")
+
+
+class PartnerMatrix(BaseModel):
+    """Commission data for a single partner across all months."""
+
+    partner_id: str = Field(..., description="Unique identifier of the partner")
+    partner_name: str = Field(..., description="Name of the partner")
+    months: list[MonthCommission] = Field(
+        ..., description="List of commission values per month"
+    )
+
+
+class CommissionMatrix(BaseModel):
+    """Matrix view of commissions by partner and month."""
+
+    financial_year: str = Field(..., description="Financial year")
+    matrix: list[PartnerMatrix] = Field(
+        ..., description="Matrix of partner commissions"
+    )
+    partners: list[str] = Field(..., description="List of partner names")
+    months: list[str] = Field(
+        ..., description="List of month names in the financial year"
+    )
+    total: Optional[float] = Field(
+        None, description="Optional overall total across all partners and months"
+    )
+
+
+class CommissionMatrixResponse(BaseResponse):
+    """Response for commission matrix view."""
+
+    data: CommissionMatrix = Field(..., description="Commission matrix data")
+
 
 # Mapping utilities
 class CommissionMapper:
     """Utility class for mapping between domain models and DTOs."""
-    
+
     @staticmethod
-    def to_response(commission: Commission, partner: Optional[Partner] = None) -> CommissionResponse:
+    def to_response(
+        commission: Commission, partner: Optional[Partner] = None
+    ) -> CommissionResponse:
         """Convert domain model to response DTO."""
         return CommissionResponse.from_domain(commission, partner)
-    
+
     @staticmethod
-    def to_response_list(commissions: List[Commission], partners: Optional[List[Partner]] = None) -> List[CommissionResponse]:
+    def to_response_list(
+        commissions: list[Commission], partners: Optional[list[Partner]] = None
+    ) -> list[CommissionResponse]:
         """Convert list of domain models to response DTOs."""
         partner_map = {p.id: p for p in partners} if partners else {}
         return [
-            CommissionResponse.from_domain(commission, partner_map.get(commission.partner_id))
+            CommissionResponse.from_domain(
+                commission, partner_map.get(commission.partner_id)
+            )
             for commission in commissions
         ]
-    
+
     @staticmethod
-    def create_summary(commissions: List[Commission], financial_year: Optional[str] = None) -> CommissionSummary:
+    def create_summary(
+        commissions: list[Commission], financial_year: Optional[str] = None
+    ) -> CommissionSummary:
         """Create summary from list of commissions."""
         if not commissions:
             return CommissionSummary(
@@ -193,17 +284,51 @@ class CommissionMapper:
                 currency="INR",
                 count=0,
                 average_amount=0.0,
-                financial_year=financial_year or "N/A"
+                financial_year=financial_year or "N/A",
             )
-        
+
         total = sum(c.amount.to_float() for c in commissions)
         count = len(commissions)
         currency = commissions[0].amount.currency
-        
+
         return CommissionSummary(
             total_amount=total,
             currency=currency,
             count=count,
             average_amount=total / count if count > 0 else 0.0,
-            financial_year=financial_year or commissions[0].financial_year.to_string("short")
+            financial_year=financial_year
+            or commissions[0].financial_year.to_string("short"),
+        )
+
+    @staticmethod
+    def to_matrix_response(raw_data: dict) -> CommissionMatrixResponse:
+        """Convert raw data to CommissionMatrixResponse DTO."""
+        matrix = []
+        for partner_entry in raw_data.get("matrix", []):
+            months = [
+                MonthCommission(
+                    month=month_data["month"],
+                    current=month_data["current"],
+                    previous=month_data["previous"],
+                )
+                for month_data in partner_entry.get("months", [])
+            ]
+            matrix.append(
+                PartnerMatrix(
+                    partner_id=partner_entry["partner_id"],
+                    partner_name=partner_entry["partner_name"],
+                    months=months,
+                )
+            )
+
+        commission_matrix = CommissionMatrix(
+            financial_year=raw_data["financial_year"],
+            matrix=matrix,
+            partners=raw_data.get("partners", []),
+            months=raw_data.get("months", []),
+            total=raw_data.get("total"),
+        )
+
+        return CommissionMatrixResponse(
+            data=commission_matrix, message="Matrix data retrieved successfully"
         )

@@ -1,5 +1,4 @@
-"""
-Middleware Infrastructure
+"""Middleware Infrastructure
 
 Centralized middleware components for request handling, logging,
 error boundaries, and context management.
@@ -10,8 +9,8 @@ from .logging_middleware import RequestLoggingMiddleware
 from .metrics_middleware import MetricsMiddleware
 
 __all__ = [
-    'ErrorHandlingMiddleware',
-    'RequestContextMiddleware', 
-    'RequestLoggingMiddleware',
-    'MetricsMiddleware'
+    "ErrorHandlingMiddleware",
+    "RequestContextMiddleware",
+    "RequestLoggingMiddleware",
+    "MetricsMiddleware",
 ]

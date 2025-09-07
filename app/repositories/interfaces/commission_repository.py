@@ -1,5 +1,4 @@
-"""Commission repository interface defining commission-specific data access operations.
-"""
+"""Commission repository interface defining commission-specific data access operations."""
 
 from abc import abstractmethod
 from datetime import date
