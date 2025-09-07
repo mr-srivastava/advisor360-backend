@@ -77,7 +77,7 @@ class ICommissionService(ABC):
         pass
 
     @abstractmethod
-    async def get_commissions_with_partners(self) -> list[dict[str, Any]]:
+    async def get_commissions_with_partners(self, count=10) -> list[dict[str, Any]]:
         """Retrieve all commissions with their associated partner information.
 
         Returns:

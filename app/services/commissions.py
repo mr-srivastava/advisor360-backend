@@ -104,17 +104,19 @@ class CommissionService(ICommissionService):
                 f"Failed to retrieve commissions for financial year: {str(e)}"
             ) from e
 
-    async def get_commissions_with_partners(self) -> list[dict[str, Any]]:
+    async def get_commissions_with_partners(self, count: int) -> list[dict[str, Any]]:
         """Retrieve all commissions with their associated partner information."""
         try:
-            commissions = await self._commission_repo.get_all()
+            commissions = await self._commission_repo.get_all_ordered(
+                "created_at", ascending=False
+            )
             partners = await self._partner_repo.get_all()
 
             # Create partner lookup
             partner_lookup = {p.id: p for p in partners}
 
             result = []
-            for commission in commissions:
+            for commission in commissions[:count]:
                 partner = partner_lookup.get(commission.partner_id)
                 commission_dict = commission.to_dict()
                 commission_dict["partner"] = partner.to_dict() if partner else None

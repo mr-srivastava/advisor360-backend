@@ -117,14 +117,14 @@ class DashboardService(IDashboardService):
         try:
             monthly_commissions = await self._commission_service.get_monthly_analytics()
             recent_commissions_data = (
-                await self._commission_service.get_commissions_with_partners()
+                await self._commission_service.get_commissions_with_partners(
+                    10
+                )  # Get the 10 most recent
             )
 
             # Format recent commissions to match RecentCommissionActivity structure
             recent_commissions = []
-            for commission_data in recent_commissions_data[
-                :10
-            ]:  # Get the 10 most recent
+            for commission_data in recent_commissions_data:
                 partner = commission_data.get("partner", {})
                 partner_name = (
                     partner.get("name", "Unknown Partner")
