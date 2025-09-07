@@ -1,0 +1,22 @@
+# Core web framework
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
+
+# Database and storage
+supabase>=2.0.0
+
+# Data validation and serialization
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Authentication and security
+PyJWT>=2.8.0
+bcrypt>=4.0.0
+
+# Utilities
+python-dateutil>=2.8.0
+python-dotenv>=1.0.0
+python-multipart>=0.0.6
+
+# Monitoring and logging
+sentry-sdk>=1.30.0
