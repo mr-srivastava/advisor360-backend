@@ -3,7 +3,7 @@
 
 import logging
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
 from postgrest.exceptions import APIError
 from supabase import Client
@@ -664,4 +664,40 @@ class CommissionRepository(
             )
             raise RepositoryError(
                 f"Unexpected error searching commissions by description: {str(e)}"
+            ) from e
+
+    async def get_all_ordered(
+        self,
+        order_by: str = "created_at",
+        ascending: bool = False,
+        filters: Optional[dict[str, Any]] = None,
+    ) -> list[Commission]:
+        """Retrieve all commissions with ordering, handling pagination.
+
+        Args:
+            order_by: Column to order by (default: created_at)
+            ascending: Whether to sort in ascending order (default: False for descending)
+            filters: Optional dictionary of filters to apply
+
+        Returns:
+            List of all commissions ordered as specified
+
+        Raises:
+            RepositoryError: If there's an error accessing the data store
+        """
+        try:
+            self._logger.debug(
+                f"Fetching all commissions ordered by {order_by} (asc={ascending}) with filters: {filters}"
+            )
+
+            # Use the base class method that handles pagination
+            commissions = await super().get_all_ordered(order_by, ascending, filters)
+
+            self._logger.debug(f"Retrieved {len(commissions)} ordered commissions")
+            return commissions
+
+        except Exception as e:
+            self._logger.error(f"Unexpected error retrieving ordered commissions: {e}")
+            raise RepositoryError(
+                f"Unexpected error retrieving ordered commissions: {str(e)}"
             ) from e

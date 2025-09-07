@@ -43,6 +43,19 @@ class CommissionService(ICommissionService):
                 f"Failed to retrieve commissions: {str(e)}"
             ) from e
 
+    async def get_all_commissions_ordered(self) -> list[Commission]:
+        """Retrieve all commissions in the system ordered by creation date (newest first)."""
+        try:
+            # Use the new get_all_ordered method that handles pagination properly
+            result: list[Commission] = await self._commission_repo.get_all_ordered(
+                "created_at", ascending=False
+            )
+            return result
+        except Exception as e:
+            raise ExternalServiceError(
+                f"Failed to retrieve ordered commissions: {str(e)}"
+            ) from e
+
     async def get_commission_by_id(self, commission_id: str) -> Commission:
         """Retrieve a specific commission by ID."""
         try:
