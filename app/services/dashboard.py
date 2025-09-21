@@ -109,7 +109,7 @@ class DashboardService(IDashboardService):
             ]
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get overview statistics: {str(e)}"
+                "dashboard_service", "get_overview_statistics", f"Failed to get overview statistics: {str(e)}"
             ) from e
 
     async def get_recent_activities(self) -> dict[str, Any]:
@@ -171,7 +171,7 @@ class DashboardService(IDashboardService):
             }
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get recent activities: {str(e)}"
+                "dashboard_service", "get_recent_activities", f"Failed to get recent activities: {str(e)}"
             ) from e
 
     async def get_available_financial_years(self) -> list[str]:
@@ -186,7 +186,7 @@ class DashboardService(IDashboardService):
             return sorted(financial_years, reverse=True)
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get available financial years: {str(e)}"
+                "dashboard_service", "get_available_financial_years", f"Failed to get available financial years: {str(e)}"
             ) from e
 
     async def calculate_financial_year_metrics(
@@ -238,7 +238,7 @@ class DashboardService(IDashboardService):
             raise
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to calculate FY metrics: {str(e)}"
+                "dashboard_service", "calculate_financial_year_metrics", f"Failed to calculate FY metrics: {str(e)}"
             ) from e
 
     async def get_monthly_commissions_by_financial_year(
@@ -283,7 +283,7 @@ class DashboardService(IDashboardService):
             raise
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get monthly commissions: {str(e)}"
+                "dashboard_service", "get_monthly_commissions_by_financial_year", f"Failed to get monthly commissions: {str(e)}"
             ) from e
 
     async def get_entity_performance_by_financial_year(
@@ -339,7 +339,7 @@ class DashboardService(IDashboardService):
             raise
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get entity performance: {str(e)}"
+                "dashboard_service", "get_entity_performance_by_financial_year", f"Failed to get entity performance: {str(e)}"
             ) from e
 
     async def get_growth_analytics(self, financial_year: str) -> dict[str, Any]:
@@ -359,7 +359,7 @@ class DashboardService(IDashboardService):
             }
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get growth analytics: {str(e)}"
+                "dashboard_service", "get_growth_analytics", f"Failed to get growth analytics: {str(e)}"
             ) from e
 
     async def get_commission_trends(self, months: int = 12) -> list[dict[str, Any]]:
@@ -393,7 +393,7 @@ class DashboardService(IDashboardService):
             return result[:months]
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get commission trends: {str(e)}"
+                "dashboard_service", "get_commission_trends", f"Failed to get commission trends: {str(e)}"
             ) from e
 
     async def get_partner_performance_summary(self) -> list[dict[str, Any]]:
@@ -424,7 +424,7 @@ class DashboardService(IDashboardService):
             return result
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get partner performance summary: {str(e)}"
+                "dashboard_service", "get_partner_performance_summary", f"Failed to get partner performance summary: {str(e)}"
             ) from e
 
     async def get_quarterly_breakdown(
@@ -464,5 +464,5 @@ class DashboardService(IDashboardService):
             raise
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get quarterly breakdown: {str(e)}"
+                "dashboard_service", "get_quarterly_breakdown", f"Failed to get quarterly breakdown: {str(e)}"
             ) from e
