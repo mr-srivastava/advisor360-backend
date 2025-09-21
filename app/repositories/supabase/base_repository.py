@@ -263,7 +263,12 @@ class BaseSupabaseRepository(BaseRepositoryImpl[T], Generic[T, M]):
 
             self._logger.debug(f"Creating {self._table_name} with data: {data}")
 
-            response = self._client.table(self._table_name).insert(data).execute()
+            # Insert into Supabase using the proper API
+            response = (
+                self._client.table(self._table_name)
+                .insert([data])  # Insert expects a list
+                .execute()
+            )
 
             if not response.data:
                 raise RepositoryError(

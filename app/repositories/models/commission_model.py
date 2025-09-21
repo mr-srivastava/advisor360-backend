@@ -26,9 +26,7 @@ class CommissionModel(BaseModel):
     description: Optional[str] = Field(
         None, max_length=500, description="Commission description"
     )
-    created_at: datetime = Field(
-        default_factory=datetime.now, description="Creation timestamp"
-    )
+    created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
@@ -125,6 +123,10 @@ class CommissionModel(BaseModel):
                 )
             elif isinstance(updated_at_value, datetime):
                 updated_at = updated_at_value
+
+            # Ensure updated_at is not before created_at
+            if updated_at and updated_at < created_at:
+                updated_at = None  # Set to None if invalid
 
         return cls(
             id=row["id"],

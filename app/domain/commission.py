@@ -81,6 +81,8 @@ class Commission:
         commission_id = str(uuid.uuid4())
         financial_year = FinancialYear.from_date(transaction_date)
 
+        # Create the commission with created_at timestamp
+        now = datetime.now()
         return cls(
             id=commission_id,
             partner_id=partner_id,
@@ -88,6 +90,8 @@ class Commission:
             transaction_date=transaction_date,
             financial_year=financial_year,
             description=description,
+            created_at=now,
+            updated_at=now,  # Set updated_at to same as created_at for new records
         )
 
     def update_amount(self, new_amount: Money) -> "Commission":

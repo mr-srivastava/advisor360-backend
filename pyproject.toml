@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 88
-target-version = ['py39', 'py310', 'py311']
-include = '\.pyi?$'
+target-version = ['py312']
+include = '\.pyi?$'$'
 extend-exclude = '''
 /(
   # directories
@@ -34,7 +34,7 @@ ensure_newline_before_comments = true
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py312"
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -107,7 +107,7 @@ max-complexity = 10
 convention = "google"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_incomplete_defs = true

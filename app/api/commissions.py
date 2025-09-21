@@ -2,7 +2,12 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from ..core.exceptions import CommissionNotFound, DomainException, PartnerNotFound
+from ..core.exceptions import (
+    CommissionNotFound,
+    DomainException,
+    DuplicateError,
+    PartnerNotFound,
+)
 from .dependencies import CommissionServiceDep, PartnerServiceDep
 from .dtos.commission_dtos import (
     CommissionDetailResponse,
@@ -26,12 +31,12 @@ router = APIRouter()
 async def list_commissions(
     commission_service: CommissionServiceDep,
     partner_service: PartnerServiceDep,
-    partner_id: Optional[str] = Query(None, description="Filter by partner ID"),
-    financial_year: Optional[str] = Query(
+    partner_id: str | None = Query(None, description="Filter by partner ID"),
+    financial_year: str | None = Query(
         None, description="Filter by financial year (e.g., FY24-25)"
     ),
-):
-    """Get all commissions with optional filtering"""
+) -> CommissionListResponse:
+    """Get all commissions with optional filtering."""
     try:
         if partner_id:
             commissions = await commission_service.get_commissions_by_partner(
@@ -43,7 +48,7 @@ async def list_commissions(
             )
         else:
             # Get all commissions ordered by creation date (newest first)
-            commissions = await commission_service.get_all_commissions_ordered()
+            commissions = await commission_service.get_all_commissions()
 
         # Get partners for enriching response
         partners = await partner_service.get_all_partners()
@@ -59,11 +64,11 @@ async def list_commissions(
             message=f"Retrieved {len(commission_responses)} commissions successfully",
         )
     except (PartnerNotFound, DomainException) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch commissions: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(
@@ -76,8 +81,8 @@ async def get_commission(
     commission_id: str,
     commission_service: CommissionServiceDep,
     partner_service: PartnerServiceDep,
-):
-    """Get a specific commission by ID"""
+) -> CommissionDetailResponse:
+    """Get a specific commission by ID."""
     try:
         commission = await commission_service.get_commission_by_id(commission_id)
 
@@ -91,13 +96,13 @@ async def get_commission(
             data=commission_response, message="Commission retrieved successfully"
         )
     except CommissionNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except (PartnerNotFound, DomainException) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch commission: {str(e)}"
-        )
+        ) from e
 
 
 @router.post(
@@ -110,14 +115,16 @@ async def create_commission(
     request: CreateCommissionRequest,
     commission_service: CommissionServiceDep,
     partner_service: PartnerServiceDep,
-):
-    """Create a new commission"""
+) -> CommissionDetailResponse:
+    """Create a new commission."""
     try:
+        # Convert the request to domain model
+        domain_commission = request.to_domain()
         commission = await commission_service.create_commission(
-            partner_id=request.partner_id,
-            amount=request.amount,
-            transaction_date=request.transaction_date,
-            description=request.description,
+            partner_id=domain_commission.partner_id,
+            amount=domain_commission.amount.amount,
+            transaction_date=domain_commission.transaction_date,
+            description=domain_commission.description,
         )
 
         # Get partner information
@@ -129,12 +136,14 @@ async def create_commission(
         return CommissionDetailResponse(
             data=commission_response, message="Commission created successfully"
         )
+    except DuplicateError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except (PartnerNotFound, DomainException) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to create commission: {str(e)}"
-        )
+        ) from e
 
 
 @router.put(
@@ -148,8 +157,8 @@ async def update_commission(
     request: UpdateCommissionRequest,
     commission_service: CommissionServiceDep,
     partner_service: PartnerServiceDep,
-):
-    """Update an existing commission"""
+) -> CommissionDetailResponse:
+    """Update an existing commission."""
     try:
         commission = await commission_service.update_commission(
             commission_id=commission_id,
@@ -167,13 +176,13 @@ async def update_commission(
             data=commission_response, message="Commission updated successfully"
         )
     except CommissionNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except (PartnerNotFound, DomainException) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to update commission: {str(e)}"
-        )
+        ) from e
 
 
 @router.delete(
@@ -184,8 +193,8 @@ async def update_commission(
 )
 async def delete_commission(
     commission_id: str, commission_service: CommissionServiceDep
-):
-    """Delete a commission"""
+) -> SuccessResponse:
+    """Delete a commission."""
     try:
         success = await commission_service.delete_commission(commission_id)
 
@@ -195,13 +204,13 @@ async def delete_commission(
             raise HTTPException(status_code=500, detail="Failed to delete commission")
 
     except CommissionNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except DomainException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to delete commission: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(
@@ -212,8 +221,8 @@ async def delete_commission(
 async def get_commission_matrix_by_fy(
     financial_year: str,
     commission_service: CommissionServiceDep,
-):
-    """Get Matrix View for Commission by FY"""
+) -> CommissionMatrixResponse:
+    """Get Matrix View for Commission by FY."""
     try:
         get_commission_matrix_by_fy = (
             await commission_service.get_commission_matrix_by_fy(financial_year)
@@ -222,4 +231,4 @@ async def get_commission_matrix_by_fy(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to get commission matrix: {str(e)}"
-        )
+        ) from e

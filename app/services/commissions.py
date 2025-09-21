@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 from ..core.exceptions import (
     CommissionNotFound,
+    DuplicateError,
     ExternalServiceError,
     PartnerNotFound,
     ValidationError,
@@ -40,7 +41,7 @@ class CommissionService(ICommissionService):
             return result
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to retrieve commissions: {str(e)}"
+                "commission_repository", "get_all", f"Failed to retrieve commissions: {str(e)}"
             ) from e
 
     async def get_all_commissions_ordered(self) -> list[Commission]:
@@ -53,7 +54,7 @@ class CommissionService(ICommissionService):
             return result
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to retrieve ordered commissions: {str(e)}"
+                "commission_repository", "get_all_ordered", f"Failed to retrieve ordered commissions: {str(e)}"
             ) from e
 
     async def get_commission_by_id(self, commission_id: str) -> Commission:
@@ -67,7 +68,7 @@ class CommissionService(ICommissionService):
             raise
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to retrieve commission: {str(e)}"
+                "commission_repository", "get_by_id", f"Failed to retrieve commission: {str(e)}"
             ) from e
 
     async def get_commissions_by_partner(self, partner_id: str) -> list[Commission]:
@@ -86,7 +87,7 @@ class CommissionService(ICommissionService):
             raise
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to retrieve commissions for partner: {str(e)}"
+                "commission_repository", "get_by_partner_id", f"Failed to retrieve commissions for partner: {str(e)}"
             ) from e
 
     async def get_commissions_by_financial_year(
@@ -101,7 +102,7 @@ class CommissionService(ICommissionService):
             return result
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to retrieve commissions for financial year: {str(e)}"
+                "commission_repository", "get_by_financial_year", f"Failed to retrieve commissions for financial year: {str(e)}"
             ) from e
 
     async def get_commissions_with_partners(self, count: int) -> list[dict[str, Any]]:
@@ -125,7 +126,7 @@ class CommissionService(ICommissionService):
             return result
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to retrieve commissions with partners: {str(e)}"
+                "commission_repository", "get_commissions_with_partners", f"Failed to retrieve commissions with partners: {str(e)}"
             ) from e
 
     async def create_commission(
@@ -142,6 +143,21 @@ class CommissionService(ICommissionService):
             if not partner:
                 raise PartnerNotFound(partner_id)
 
+            # Check for duplicate commission in the same month/year
+            existing_commission = await self._commission_repo.exists_by_partner_and_month(
+                partner_id, transaction_date
+            )
+            if existing_commission:
+                # Get month name and financial year for error message
+                month_name = existing_commission.get_month_name()
+                fy_string = existing_commission.financial_year.to_string("short")
+                raise DuplicateError(
+                    entity_type="Commission",
+                    field="partner_id + month/year",
+                    value=f"{partner_id} in {month_name} {fy_string}",
+                    message=f"Commission already exists for {month_name} {fy_string}"
+                )
+
             # Create domain objects
             money = Money.from_float(amount)
             commission = Commission.create_new(
@@ -150,10 +166,10 @@ class CommissionService(ICommissionService):
 
             # Save to repository
             return await self._commission_repo.create(commission)
-        except (PartnerNotFound, ValidationError):
+        except (PartnerNotFound, ValidationError, DuplicateError):
             raise
         except Exception as e:
-            raise ExternalServiceError(f"Failed to create commission: {str(e)}") from e
+            raise ExternalServiceError("commission_repository", "create", f"Failed to create commission: {str(e)}") from e
 
     async def update_commission(
         self,
@@ -182,7 +198,7 @@ class CommissionService(ICommissionService):
         except (CommissionNotFound, ValidationError):
             raise
         except Exception as e:
-            raise ExternalServiceError(f"Failed to update commission: {str(e)}") from e
+            raise ExternalServiceError("commission_repository", "update", f"Failed to update commission: {str(e)}") from e
 
     async def delete_commission(self, commission_id: str) -> bool:
         """Delete a commission."""
@@ -197,7 +213,7 @@ class CommissionService(ICommissionService):
         except CommissionNotFound:
             raise
         except Exception as e:
-            raise ExternalServiceError(f"Failed to delete commission: {str(e)}") from e
+            raise ExternalServiceError("commission_repository", "delete", f"Failed to delete commission: {str(e)}") from e
 
     async def get_total_commissions(self) -> float:
         """Get total commission amount across all time."""
@@ -207,7 +223,7 @@ class CommissionService(ICommissionService):
             return total
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to calculate total commissions: {str(e)}"
+                "commission_repository", "get_total_commissions", f"Failed to calculate total commissions: {str(e)}"
             ) from e
 
     async def get_total_commissions_by_month(self, month: str, year: int) -> float:
@@ -221,7 +237,7 @@ class CommissionService(ICommissionService):
             return total
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to calculate monthly commissions: {str(e)}"
+                "commission_repository", "get_by_month_year", f"Failed to calculate monthly commissions: {str(e)}"
             ) from e
 
     async def get_total_commissions_by_financial_year(
@@ -236,7 +252,7 @@ class CommissionService(ICommissionService):
             return result
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to calculate FY commissions: {str(e)}"
+                "commission_repository", "get_total_amount_by_financial_year", f"Failed to calculate FY commissions: {str(e)}"
             ) from e
 
     async def get_monthly_analytics(self) -> list[dict[str, Any]]:
@@ -265,7 +281,7 @@ class CommissionService(ICommissionService):
             return monthly_data_list[-6:]
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to generate monthly analytics: {str(e)}"
+                "commission_repository", "get_monthly_analytics", f"Failed to generate monthly analytics: {str(e)}"
             ) from e
 
     async def get_recent_commissions(self, limit: int = 10) -> list[Commission]:
@@ -277,7 +293,7 @@ class CommissionService(ICommissionService):
             return result
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to retrieve recent commissions: {str(e)}"
+                "commission_repository", "get_recent_commissions", f"Failed to retrieve recent commissions: {str(e)}"
             ) from e
 
     async def search_commissions(self, search_term: str) -> list[Commission]:
@@ -288,7 +304,7 @@ class CommissionService(ICommissionService):
             )
             return result
         except Exception as e:
-            raise ExternalServiceError(f"Failed to search commissions: {str(e)}") from e
+            raise ExternalServiceError("commission_repository", "search_by_description", f"Failed to search commissions: {str(e)}") from e
 
     async def get_commission_matrix_by_fy(self, financial_year: str) -> dict:
         try:
@@ -352,5 +368,5 @@ class CommissionService(ICommissionService):
             return result
         except Exception as e:
             raise ExternalServiceError(
-                f"Failed to get commission matrix: {str(e)}"
+                "commission_repository", "get_commission_matrix_by_fy", f"Failed to get commission matrix: {str(e)}"
             ) from e

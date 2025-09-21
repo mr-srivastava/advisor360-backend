@@ -665,6 +665,74 @@ class CommissionRepository(
                 f"Unexpected error searching commissions by description: {str(e)}"
             ) from e
 
+    async def exists_by_partner_and_month(self, partner_id: str, transaction_date: date) -> Optional[Commission]:
+        """Check if a commission already exists for a partner in the same month/year.
+
+        Args:
+            partner_id: The unique identifier of the partner
+            transaction_date: The transaction date to check
+
+        Returns:
+            Existing commission if found, None otherwise
+
+        Raises:
+            RepositoryError: If there's an error accessing the data store
+        """
+        try:
+            if not partner_id or not partner_id.strip():
+                raise ValueError("Partner ID cannot be empty")
+
+            # Create date range for the month
+            start_date = transaction_date.replace(day=1)
+            if transaction_date.month == 12:
+                end_date = date(transaction_date.year + 1, 1, 1)
+            else:
+                end_date = date(transaction_date.year, transaction_date.month + 1, 1)
+
+            self._logger.debug(
+                f"Checking for existing commission for partner {partner_id} in {transaction_date.strftime('%B %Y')}"
+            )
+
+            response = (
+                self._client.table(self._table_name)
+                .select("*")
+                .eq("entity_id", partner_id)
+                .gte("month", start_date.isoformat())
+                .lt("month", end_date.isoformat())
+                .limit(1)
+                .execute()
+            )
+
+            if response.data:
+                db_model = CommissionModel.from_database_row(response.data[0])
+                commission = db_model.to_domain()
+                self._logger.debug(
+                    f"Found existing commission {commission.id} for partner {partner_id} in {transaction_date.strftime('%B %Y')}"
+                )
+                return commission
+
+            self._logger.debug(
+                f"No existing commission found for partner {partner_id} in {transaction_date.strftime('%B %Y')}"
+            )
+            return None
+
+        except APIError as e:
+            self._logger.error(
+                f"Supabase API error checking commission existence: {e}"
+            )
+            raise RepositoryError(
+                f"Failed to check commission existence: {str(e)}"
+            ) from e
+        except ValueError:
+            raise
+        except Exception as e:
+            self._logger.error(
+                f"Unexpected error checking commission existence: {e}"
+            )
+            raise RepositoryError(
+                f"Unexpected error checking commission existence: {str(e)}"
+            ) from e
+
     async def get_all_ordered(
         self,
         order_by: str = "created_at",

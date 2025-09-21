@@ -223,3 +223,19 @@ class ICommissionRepository(BaseRepository[Commission]):
             RepositoryError: If there's an error accessing the data store
         """
         pass
+
+    @abstractmethod
+    async def exists_by_partner_and_month(self, partner_id: str, transaction_date: date) -> Optional[Commission]:
+        """Check if a commission already exists for a partner in the same month/year.
+
+        Args:
+            partner_id: The unique identifier of the partner
+            transaction_date: The transaction date to check
+
+        Returns:
+            Existing commission if found, None otherwise
+
+        Raises:
+            RepositoryError: If there's an error accessing the data store
+        """
+        pass
