@@ -112,7 +112,7 @@ class CommissionModel(BaseModel):
         elif isinstance(created_at_value, datetime):
             created_at = created_at_value
         else:
-            created_at = datetime.now()
+            created_at = datetime.utcnow()
 
         updated_at_value = row.get("updated_at")
         updated_at = None

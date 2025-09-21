@@ -1,7 +1,7 @@
 """Commission domain model representing commission transactions in the system."""
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from .value_objects.financial_year import FinancialYear
@@ -22,7 +22,7 @@ class Commission:
     transaction_date: date
     financial_year: FinancialYear
     description: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
 
     def __post_init__(self):
@@ -61,7 +61,10 @@ class Commission:
         if self.description and len(self.description.strip()) > 500:
             raise ValueError("Description cannot exceed 500 characters")
 
-        if self.created_at > datetime.now():
+        # Allow tolerance for cloud clock skew and time zone differences (5 minutes)
+        # This accounts for potential differences between application server and database server times
+        tolerance = timedelta(minutes=5)
+        if self.created_at > datetime.utcnow() + tolerance:
             raise ValueError("Created date cannot be in the future")
 
         if self.updated_at and self.updated_at < self.created_at:
@@ -81,8 +84,8 @@ class Commission:
         commission_id = str(uuid.uuid4())
         financial_year = FinancialYear.from_date(transaction_date)
 
-        # Create the commission with created_at timestamp
-        now = datetime.now()
+        # Create the commission with created_at timestamp in UTC
+        now = datetime.utcnow()
         return cls(
             id=commission_id,
             partner_id=partner_id,
@@ -110,7 +113,7 @@ class Commission:
             financial_year=self.financial_year,
             description=self.description,
             created_at=self.created_at,
-            updated_at=datetime.now(),
+            updated_at=datetime.utcnow(),
         )
 
     def update_description(self, new_description: Optional[str]) -> "Commission":
@@ -126,7 +129,7 @@ class Commission:
             financial_year=self.financial_year,
             description=new_description.strip() if new_description else None,
             created_at=self.created_at,
-            updated_at=datetime.now(),
+            updated_at=datetime.utcnow(),
         )
 
     def update_transaction_date(self, new_date: date) -> "Commission":
@@ -148,7 +151,7 @@ class Commission:
             financial_year=new_financial_year,
             description=self.description,
             created_at=self.created_at,
-            updated_at=datetime.now(),
+            updated_at=datetime.utcnow(),
         )
 
     def get_month_name(self) -> str:
